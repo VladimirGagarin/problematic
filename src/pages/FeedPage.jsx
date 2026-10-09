@@ -1,20 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
 import { useLocation, Link } from 'react-router-dom'
 import { posts } from '../data/posts'
 import './FeedPage.css'
 
 function FeedPage() {
   const location = useLocation()
-  const [feedPosts, setFeedPosts] = useState([])
 
-  useEffect(() => {
+  const feedPosts = useMemo(() => {
     if (location.pathname.includes('foryou') || location.pathname === '/') {
-      setFeedPosts(posts)
+      return posts
     } else if (location.pathname.includes('unsolved')) {
-      setFeedPosts(posts.filter(p => p.type.includes('puzzle')))
+      return posts.filter(p => p.type.includes('puzzle'))
     } else if (location.pathname.includes('discoveries')) {
-      setFeedPosts(posts)
+      return posts
     }
+    return []
   }, [location.pathname])
 
   return (
