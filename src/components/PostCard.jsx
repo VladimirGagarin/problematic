@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FiMoreHorizontal, FiUser, FiArrowUp, FiMessageSquare, FiEye, FiBookmark, FiStar, FiShare2, FiZap, FiLock } from 'react-icons/fi'
 import './PostCard.css'
 
 function PostCard({ post }) {
@@ -43,10 +44,7 @@ function PostCard({ post }) {
       <header className="post-header">
         <div className="author-info">
           <div className="author-avatar">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
+            <FiUser size={22} />
           </div>
           <div className="author-details">
             <div className="author-name">{post.author}</div>
@@ -57,12 +55,8 @@ function PostCard({ post }) {
             </div>
           </div>
         </div>
-        <button type="button" className="more-options" aria-label="More options">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-            <circle cx="5" cy="12" r="1.5" />
-            <circle cx="12" cy="12" r="1.5" />
-            <circle cx="19" cy="12" r="1.5" />
-          </svg>
+        <button type="button" className="more-options" aria-label="More options" title="More options">
+          <FiMoreHorizontal size={18} />
         </button>
       </header>
 
@@ -88,18 +82,20 @@ function PostCard({ post }) {
           className="status-btn"
           onClick={() => setShowHints(!showHints)}
           aria-expanded={showHints}
+          title={`${post.hints?.length || 0} hint${post.hints?.length !== 1 ? 's' : ''} available`}
         >
-          <span className="status-icon">💡</span>
-          <span>{post.hints?.length || 0} hint{post.hints?.length !== 1 ? 's' : ''} available</span>
+          <FiZap size={16} />
+          <span className="status-text">{post.hints?.length || 0} hint{post.hints?.length !== 1 ? 's' : ''}</span>
         </button>
         <button
           type="button"
           className="status-btn"
           onClick={() => setShowAnswer(!showAnswer)}
           aria-expanded={showAnswer}
+          title={showAnswer ? 'Answer revealed' : 'Answer hidden'}
         >
-          <span className="status-icon">🔒</span>
-          <span>{showAnswer ? 'Answer revealed' : 'Answer hidden'}</span>
+          <FiLock size={16} />
+          <span className="status-text">{showAnswer ? 'Revealed' : 'Hidden'}</span>
         </button>
       </section>
 
@@ -134,39 +130,37 @@ function PostCard({ post }) {
       )}
 
       <section className="engagement-actions">
-        <button type="button" className="action-btn">
-          <span className="action-icon">↑</span>
-          <span>Upvote: {post.votes}</span>
+        <button type="button" className="action-btn" title="Upvote">
+          <FiArrowUp size={18} />
+          <span className="action-text">{post.votes}</span>
         </button>
-        <button type="button" className="action-btn">
-          <span className="action-icon">💬</span>
-          <span>Comments: {formatCompactNumber(post.comments)}</span>
+        <button type="button" className="action-btn" title="Comments">
+          <FiMessageSquare size={18} />
+          <span className="action-text">{formatCompactNumber(post.comments)}</span>
         </button>
-        <button type="button" className="action-btn">
-          <span className="action-icon">👁</span>
-          <span>Views: {formatCompactNumber(post.views)}</span>
+        <button type="button" className="action-btn" title="Views">
+          <FiEye size={18} />
+          <span className="action-text">{formatCompactNumber(post.views)}</span>
         </button>
       </section>
 
       <section className="secondary-actions">
-        <button type="button" className="secondary-btn">
-          <span className="secondary-icon">🔖</span>
-          <span>Save</span>
+        <button type="button" className="secondary-btn" title="Save">
+          <FiBookmark size={18} />
         </button>
-        <button type="button" className="secondary-btn">
-          <span className="secondary-icon">✨</span>
-          <span>More like this</span>
+        <button type="button" className="secondary-btn" title="More like this">
+          <FiStar size={18} />
         </button>
-        <button type="button" className="secondary-btn">
-          <span className="secondary-icon">↗</span>
-          <span>Share</span>
+        <button type="button" className="secondary-btn" title="Share">
+          <FiShare2 size={18} />
         </button>
       </section>
 
       {post.comments > 0 && (
         <section className="discussion-preview">
-          <div className="discussion-text">
-            💬 View all {post.comments} discussion{post.comments !== 1 ? 's' : ''}
+          <div className="discussion-text" title="View all discussions">
+            <FiMessageSquare size={16} />
+            <span>View all {post.comments} discussion{post.comments !== 1 ? 's' : ''}</span>
           </div>
         </section>
       )}
