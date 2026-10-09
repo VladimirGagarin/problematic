@@ -1,0 +1,50 @@
+:root {
+  --text: #1a1a1a;
+  --text-light: #666666;
+  --bg: #ffffff;
+  --border: #e0e0e0;
+  --border-light: #f0f0f0;
+  --accent: #2c2c2c;
+  --accent-hover: #000000;
+  --notification-bg: #ff4757;
+  --notification-text: #ffffff;
+  --nav-bg: #fafafa;
+
+  --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  --heading: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+
+  font: 16px/1.6 var(--sans);
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #f5f5f5;
+    --text-light: #a0a0a0;
+    --bg: #121212;
+    --border: #333333;
+    --border-light: #1e1e1e;
+    --accent: #ffffff;
+    --accent-hover: #e0e0e0;
+    --nav-bg: #1a1a1a;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#root {
+  min-height: 100svh;
+}

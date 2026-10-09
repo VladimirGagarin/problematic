@@ -1,0 +1,38 @@
+.community-page {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.community-header {
+  margin-bottom: 2rem;
+}
+
+.community-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  color: var(--text);
+}
+
+.community-subtitle {
+  font-size: 0.9375rem;
+  color: var(--text-light);
+  margin: 0;
+}
+
+.community-empty {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-light);
+  background: var(--bg);
+}
+
+@media (max-width: 640px) {
+  .community-empty {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+}
