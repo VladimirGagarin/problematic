@@ -14,7 +14,7 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #a855f7 55%, #ec4899);
+  background: linear-gradient(135deg, #6d5cff, #8b5cf6 45%, #10b981);
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -118,7 +118,7 @@
   flex-direction: column;
   gap: 0.4rem;
   background:
-    linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(236, 72, 153, 0.08));
+    linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(16, 185, 129, 0.08));
 }
 
 .x-cta {

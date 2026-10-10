@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   FiSettings,
   FiCreditCard,
@@ -7,30 +7,33 @@ import {
   FiMessageSquare,
   FiBell,
   FiSave,
-  FiUsers
+  FiUsers,
+  FiEdit3,
+  FiTrash2,
+  FiSend,
+  FiLock,
+  FiPlus
 } from 'react-icons/fi'
 import { useAuth } from '../context/auth'
 import { useInteractions } from '../context/interactions'
-import { samplePosts } from '../data/samplePosts'
-import { formatCompactNumber } from '../utils/time'
+import { formatCategoryLabel } from '../data/categories'
+import { formatCompactNumber, formatTimeAgo } from '../utils/time'
 import './Profile.css'
 
 const TABS = [
   { id: 'posted', label: 'Posted questions', Icon: FiMessageSquare },
   { id: 'saved', label: 'Saved posts', Icon: FiSave },
   { id: 'comments', label: 'Comments & replies', Icon: FiBell },
-  { id: 'followed', label: 'Discussions followed', Icon: FiUsers }
-]
-
-const SAMPLE_COMMENTS = [
-  { post: samplePosts[0], text: 'The differences give 42 — lovely puzzle.' },
-  { post: samplePosts[1], text: 'The pairing proof is the cleanest of all.' }
+  { id: 'followed', label: 'Discussions followed', Icon: FiUsers },
+  { id: 'drafts', label: 'Drafts', Icon: FiEdit3 }
 ]
 
 function Profile() {
-  const { user, isAuthenticated, openPrompt, signOut } = useAuth()
-  const { savedIds, followingIds } = useInteractions()
-  const [activeTab, setActiveTab] = useState('posted')
+  const { user, isAuthenticated, isPremium, openPrompt, signOut } = useAuth()
+  const { savedIds, followingIds, drafts, allPosts, publishDraft, deleteDraft } = useInteractions()
+  const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'posted')
 
   if (!isAuthenticated) {
     return (
@@ -51,11 +54,16 @@ function Profile() {
     )
   }
 
-  const posted = samplePosts.filter(
-    (p) => p.author === user?.name || p.author.toLowerCase().includes('room24')
+  const SAMPLE_COMMENTS = [
+    { post: allPosts[0], text: 'The differences give 42 — lovely puzzle.' },
+    { post: allPosts[1], text: 'The pairing proof is the cleanest of all.' }
+  ].filter((c) => c.post)
+
+  const posted = allPosts.filter(
+    (p) => p.author === user?.name || p.author.toLowerCase().includes('problematic team')
   )
-  const savedPosts = samplePosts.filter((p) => savedIds.has(p.id))
-  const followedPosts = samplePosts.filter((p) => followingIds.has(p.id))
+  const savedPosts = allPosts.filter((p) => savedIds.has(p.id))
+  const followedPosts = allPosts.filter((p) => followingIds.has(p.id))
 
   const renderEmpty = (message) => (
     <p className="profile-empty">{message}</p>
@@ -76,6 +84,90 @@ function Profile() {
     </ul>
   )
 
+  const renderDrafts = () => {
+    if (!isPremium) {
+      return (
+        <div className="profile-upsell">
+          <FiLock size={20} />
+          <div className="profile-upsell-text">
+            <strong>Drafts are a Premium feature</strong>
+            <span>Save private drafts and publish them only when they are ready.</span>
+          </div>
+          <button type="button" className="btn btn-accent btn-sm" onClick={() => openPrompt('premium')}>
+            Unlock premium
+          </button>
+        </div>
+      )
+    }
+
+    if (!drafts.length) {
+      return (
+        <div className="profile-empty-block">
+          <p className="profile-empty">You have no drafts yet.</p>
+          <Link to="/create" className="btn btn-accent btn-sm">
+            <FiPlus size={15} />
+            New draft
+          </Link>
+        </div>
+      )
+    }
+
+    return (
+      <>
+        <div className="profile-drafts-head">
+          <span className="profile-drafts-count">
+            {drafts.length} {drafts.length === 1 ? 'draft' : 'drafts'}
+          </span>
+          <Link to="/create" className="btn btn-accent btn-sm">
+            <FiPlus size={15} />
+            New draft
+          </Link>
+        </div>
+        <ul className="profile-drafts">
+          {drafts.map((d) => (
+            <li key={d.id} className="profile-draft">
+              <div className="profile-draft-info">
+                <span className="profile-draft-title">{d.title || 'Untitled draft'}</span>
+                <span className="profile-draft-meta">
+                  Edited {formatTimeAgo(d.updatedAt)} · {d.difficulty} ·{' '}
+                  {formatCategoryLabel(d.category)}
+                </span>
+              </div>
+              <div className="profile-draft-actions">
+                <Link
+                  to={`/create?draft=${d.id}`}
+                  className="profile-draft-btn"
+                  title="Edit draft"
+                >
+                  <FiEdit3 size={15} />
+                </Link>
+                <button
+                  type="button"
+                  className="profile-draft-btn"
+                  title="Publish draft"
+                  onClick={() => {
+                    const postId = publishDraft(d.id)
+                    if (postId) navigate(`/post/${postId}`)
+                  }}
+                >
+                  <FiSend size={15} />
+                </button>
+                <button
+                  type="button"
+                  className="profile-draft-btn profile-draft-delete"
+                  title="Delete draft"
+                  onClick={() => deleteDraft(d.id)}
+                >
+                  <FiTrash2 size={15} />
+                </button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+
   const tabContent = {
     posted: posted.length ? renderList(posted) : renderEmpty('You have not posted any questions yet.'),
     saved: savedPosts.length ? renderList(savedPosts) : renderEmpty('No saved posts yet. Use Save on any card.'),
@@ -93,7 +185,8 @@ function Profile() {
     ),
     followed: followedPosts.length
       ? renderList(followedPosts)
-      : renderEmpty('You are not following any discussions yet. Use Follow up on any card.')
+      : renderEmpty('You are not following any discussions yet. Use Follow up on any card.'),
+    drafts: renderDrafts()
   }
 
   return (

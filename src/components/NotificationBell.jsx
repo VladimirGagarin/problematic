@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FiBell } from 'react-icons/fi'
 import NotificationItem from './NotificationItem'
-import { sampleNotifications } from '../data/sampleNotifications'
+import { useInteractions } from '../context/interactions'
 
 function NotificationBell() {
   const [open, setOpen] = useState(false)
   const wrapRef = useRef(null)
-
-  const unread = sampleNotifications.filter((n) => !n.readAt).length
+  const { notifications, unreadCount } = useInteractions()
+  const unread = unreadCount
 
   useEffect(() => {
     if (!open) return
@@ -50,7 +50,7 @@ function NotificationBell() {
             <span className="bell-unread">{unread} unread</span>
           </div>
           <div className="bell-list">
-            {sampleNotifications.slice(0, 3).map((n) => (
+            {notifications.slice(0, 3).map((n) => (
               <NotificationItem key={n.id} notification={n} />
             ))}
           </div>

@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiX, FiSend, FiUser, FiHeart, FiCornerUpLeft } from 'react-icons/fi'
+import { FiX, FiSend, FiUser, FiHeart, FiCornerUpLeft, FiBell } from 'react-icons/fi'
 import { getComments } from '../data/samplePosts'
 import { formatTimeAgo } from '../utils/time'
 import { useAuth } from '../context/auth'
+import { useInteractions } from '../context/interactions'
 import './CommentPanel.css'
 
 function CommentPanel({ post, open, onClose }) {
   const { requireAuth } = useAuth()
+  const { replyNotifyIds, toggleReplyNotify, addNotification } = useInteractions()
+  const subscribed = replyNotifyIds.has(post.id)
   const [comments, setComments] = useState(() => getComments(post.id))
   const [draft, setDraft] = useState('')
   const [likedIds, setLikedIds] = useState(() => new Set())
@@ -45,6 +48,7 @@ function CommentPanel({ post, open, onClose }) {
     }
     const text = draft.trim()
     if (!text) return
+    const parentId = replyTo?.id
     setComments((prev) => [
       {
         id: `local-${Date.now()}`,
@@ -52,10 +56,19 @@ function CommentPanel({ post, open, onClose }) {
         text,
         createdAt: new Date().toISOString(),
         likes: 0,
-        parentId: replyTo?.id
+        parentId
       },
       ...prev
     ])
+    if (subscribed) {
+      addNotification({
+        type: parentId ? 'new_reply' : 'new_comment',
+        postId: post.id,
+        message: parentId
+          ? `Someone replied in "${post.title}".`
+          : `New comment on "${post.title}".`
+      })
+    }
     setDraft('')
     setReplyTo(null)
   }
@@ -142,6 +155,18 @@ function CommentPanel({ post, open, onClose }) {
           <span className="comment-panel-count">{comments.length}</span>
         </h2>
         <div className="comment-panel-header-right">
+          <label
+            className={`comment-notify ${subscribed ? 'active' : ''}`}
+            title="Send me a notification when someone replies"
+          >
+            <input
+              type="checkbox"
+              checked={subscribed}
+              onChange={() => toggleReplyNotify(post.id)}
+            />
+            <FiBell size={14} />
+            <span>Notify me when someone replies</span>
+          </label>
           <div className="comment-sort" role="group" aria-label="Sort comments">
             <button
               type="button"

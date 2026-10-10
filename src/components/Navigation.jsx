@@ -4,8 +4,7 @@ import './Navigation.css'
 
 const desktopTabs = [
   { to: '/foryou', label: 'For you' },
-  { to: '/discoveries', label: 'Discoveries' },
-  { to: '/profile', label: 'Profile' }
+  { to: '/discoveries', label: 'Discoveries' }
 ]
 
 const bottomItems = [

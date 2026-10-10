@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { FiMessageCircle, FiAtSign, FiUsers } from 'react-icons/fi'
-import { getPost } from '../data/samplePosts'
 import { formatTimeAgo } from '../utils/time'
+import { useInteractions } from '../context/interactions'
 
 const ICONS = {
   new_comment: FiMessageCircle,
@@ -11,7 +11,8 @@ const ICONS = {
 
 function NotificationItem({ notification, detail = false }) {
   const Icon = ICONS[notification.type] || FiMessageCircle
-  const post = getPost(notification.postId)
+  const { getPostOf } = useInteractions()
+  const post = getPostOf(notification.postId)
 
   return (
     <article className={`notification-item ${notification.readAt ? 'is-read' : 'is-unread'}`}>

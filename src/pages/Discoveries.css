@@ -154,6 +154,128 @@
   color: var(--text-light);
 }
 
+.extras-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-top: 0.6rem;
+}
+
+.extras-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.extras-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--display);
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.extras-title svg {
+  color: var(--accent);
+}
+
+.extras-sub {
+  margin: 0;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.facts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
+  gap: 0.9rem;
+}
+
+.fact-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(16, 185, 129, 0.06)),
+    var(--surface);
+  backdrop-filter: blur(14px);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.fact-title {
+  font-family: var(--display);
+  font-size: 1.02rem;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.fact-text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.6;
+  color: var(--text-light);
+}
+
+.formulas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: 0.9rem;
+}
+
+.formula-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  position: relative;
+}
+
+.formula-expr {
+  font-family: ui-monospace, 'SFMono-Regular', 'Menlo', monospace;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.formula-name {
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin: 0.1rem 0 0;
+  color: var(--text);
+}
+
+.formula-note {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: var(--text-light);
+}
+
+.formula-topic {
+  align-self: flex-start;
+  margin-top: 0.1rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+}
+
 @media (max-width: 640px) {
   .discoveries-title {
     font-size: 1.6rem;

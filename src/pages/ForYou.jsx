@@ -2,12 +2,32 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import PostCard from '../components/PostCard'
 import TopicChip from '../components/TopicChip'
-import { samplePosts } from '../data/samplePosts'
+import { shuffleArray } from '../utils/shuffle'
 import { formatCompactNumber } from '../utils/time'
 import { useAuth } from '../context/auth'
+import { useInteractions } from '../context/interactions'
 import './ForYou.css'
 
 const PAGE_SIZE = 3
+
+const HERO_SHORTCUTS = [
+  { label: 'Number Theory', category: 'number-theory' },
+  { label: 'Algebra', category: 'algebra' },
+  { label: 'Geometry', category: 'geometry' },
+  { label: 'Combinatorics', category: 'combinatorics' },
+  { label: 'Topology', category: 'topology' },
+  { label: 'Analysis', category: 'analysis' },
+  { label: 'Calculus', category: 'calculus' },
+  { label: 'Linear Algebra', category: 'linear-algebra' },
+  { label: 'Graph Theory', category: 'graph-theory' },
+  { label: 'Probability', category: 'probability' },
+  { label: 'Game Theory', category: 'game-theory' },
+  { label: 'Logic', category: 'logic' },
+  { label: 'Optimization', category: 'optimization' },
+  { label: 'Cryptography', category: 'cryptography' },
+  { label: 'Dynamical Systems', category: 'dynamical-systems' },
+  { label: 'Set Theory', category: 'set-theory' }
+]
 
 const POPULAR_SUBJECTS = [
   { label: 'Number Theory', category: 'number-theory' },
@@ -15,15 +35,21 @@ const POPULAR_SUBJECTS = [
   { label: 'Geometry', category: 'geometry' },
   { label: 'Combinatorics', category: 'combinatorics' },
   { label: 'Topology', category: 'topology' },
-  { label: 'Game Theory', category: 'game-theory' }
+  { label: 'Game Theory', category: 'game-theory' },
+  { label: 'Calculus', category: 'calculus' },
+  { label: 'Analysis', category: 'analysis' }
 ]
 
 function ForYou() {
   const [visible, setVisible] = useState(PAGE_SIZE)
+  const [shortcuts] = useState(() => shuffleArray(HERO_SHORTCUTS))
+  const [subjects] = useState(() => shuffleArray(POPULAR_SUBJECTS))
   const { openPrompt } = useAuth()
+  const { allPosts, hiddenIds } = useInteractions()
 
-  const trending = [...samplePosts].sort((a, b) => b.voteCount - a.voteCount).slice(0, 3)
-  const recent = [...samplePosts]
+  const pool = allPosts.filter((p) => !hiddenIds.has(p.id))
+  const trending = [...pool].sort((a, b) => b.voteCount - a.voteCount).slice(0, 3)
+  const recent = [...pool]
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 3)
 
@@ -37,18 +63,17 @@ function ForYou() {
             Explore problems, challenge ideas, and discover how others think.
           </p>
           <div className="foryou-shortcuts">
-            <TopicChip to="/discoveries?category=number-theory" label="Number Theory" />
-            <TopicChip to="/discoveries?category=algebra" label="Algebra" />
-            <TopicChip to="/discoveries?category=geometry" label="Geometry" />
-            <TopicChip to="/discoveries?category=combinatorics" label="Combinatorics" />
+            {shortcuts.slice(0, 4).map((s) => (
+              <TopicChip key={s.category} to={`/discoveries?category=${s.category}`} label={s.label} />
+            ))}
           </div>
         </section>
 
         <div className="foryou-stream">
-          {samplePosts.slice(0, visible).map((post) => (
+          {pool.slice(0, visible).map((post) => (
             <PostCard key={post.id} post={post} />
           ))}
-          {visible < samplePosts.length && (
+          {visible < pool.length && (
             <div className="foryou-more">
               <button
                 type="button"
@@ -66,7 +91,7 @@ function ForYou() {
         <div className="side-card">
           <h3 className="side-card-title">Popular subjects</h3>
           <div className="side-chips">
-            {POPULAR_SUBJECTS.map((s) => (
+            {subjects.map((s) => (
               <TopicChip
                 key={s.category}
                 to={`/discoveries?category=${s.category}`}

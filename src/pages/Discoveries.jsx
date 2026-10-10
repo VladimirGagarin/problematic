@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { FiSearch } from 'react-icons/fi'
+import { FiSearch, FiSmile, FiZap } from 'react-icons/fi'
 import PostCard from '../components/PostCard'
-import { samplePosts } from '../data/samplePosts'
 import { categories, formatCategoryLabel } from '../data/categories'
 import { types, formatTypeLabel } from '../data/types'
+import { funFacts, formulasAndTricks } from '../data/mathExtras'
+import { shuffleArray } from '../utils/shuffle'
+import { useInteractions } from '../context/interactions'
 import './Discoveries.css'
 
 const DIFFICULTIES = ['easy', 'medium', 'hard']
@@ -13,10 +15,11 @@ const SORTS = [
   { value: 'recent', label: 'Recent' },
   { value: 'discussed', label: 'Most discussed' }
 ]
-const POPULAR_SUBJECTS = categories.slice(0, 8)
 
 function Discoveries() {
   const [params, setParams] = useSearchParams()
+  const [subjects] = useState(() => shuffleArray(categories.slice(0, 8)))
+  const { allPosts, hiddenIds } = useInteractions()
   const [query, setQuery] = useState('')
 
   const q = params.get('q') || ''
@@ -40,7 +43,8 @@ function Discoveries() {
     setParam('q', query.trim())
   }
 
-  let posts = samplePosts.filter((post) => {
+  let posts = allPosts.filter((post) => {
+    if (hiddenIds.has(post.id)) return false
     if (category && !(post.category === category || (post.secondaryCategories || []).includes(category))) {
       return false
     }
@@ -89,7 +93,7 @@ function Discoveries() {
           >
             All subjects
           </button>
-          {POPULAR_SUBJECTS.map((subject) => (
+          {subjects.map((subject) => (
             <button
               key={subject}
               type="button"
@@ -174,6 +178,42 @@ function Discoveries() {
           ))}
         </div>
       )}
+
+      <section className="extras-section" aria-label="Math fun facts">
+        <header className="extras-head">
+          <h2 className="extras-title">
+            <FiSmile size={20} /> Math fun facts
+          </h2>
+          <p className="extras-sub">Small, surprising truths worth dropping into any conversation.</p>
+        </header>
+        <div className="facts-grid">
+          {funFacts.map((fact) => (
+            <article key={fact.id} className="fact-card">
+              <h3 className="fact-title">{fact.title}</h3>
+              <p className="fact-text">{fact.text}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="extras-section" aria-label="Formulas and tricks">
+        <header className="extras-head">
+          <h2 className="extras-title">
+            <FiZap size={20} /> Formulas &amp; tricks
+          </h2>
+          <p className="extras-sub">Pocket-sized tools that make problems fall apart faster.</p>
+        </header>
+        <div className="formulas-grid">
+          {formulasAndTricks.map((item) => (
+            <article key={item.id} className="formula-card">
+              <div className="formula-expr">{item.formula}</div>
+              <h3 className="formula-name">{item.name}</h3>
+              <p className="formula-note">{item.note}</p>
+              <span className="formula-topic">{formatCategoryLabel(item.category)}</span>
+            </article>
+          ))}
+        </div>
+      </section>
     </div>
   )
 }

@@ -16,6 +16,8 @@
 }
 
 .top-banner {
+  position: sticky;
+  top: 0;
   z-index: 30;
   border-bottom: 1px solid var(--border);
   background: var(--surface);
@@ -407,6 +409,16 @@
 .menu-item-danger:hover {
   color: #f43f5e;
   background: rgba(244, 63, 94, 0.1);
+}
+
+.menu-item:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.menu-item:disabled:hover {
+  color: inherit;
+  background: none;
 }
 
 @media (min-width: 900px) {

@@ -1,30 +1,17 @@
-import { useState } from 'react'
 import NotificationItem from '../components/NotificationItem'
-import { sampleNotifications } from '../data/sampleNotifications'
+import { useInteractions } from '../context/interactions'
 import './Notifications.css'
 
 function Notifications() {
-  const [items, setItems] = useState(sampleNotifications)
+  const { notifications, markAllNotificationsRead, markNotificationRead } = useInteractions()
 
-  const unread = items.filter((n) => !n.readAt)
-  const read = items.filter((n) => n.readAt)
-
-  const markAllRead = () => {
-    setItems((prev) =>
-      prev.map((n) => (n.readAt ? n : { ...n, readAt: new Date().toISOString() }))
-    )
-  }
-
-  const markRead = (id) => {
-    setItems((prev) =>
-      prev.map((n) => (n.id === id && !n.readAt ? { ...n, readAt: new Date().toISOString() } : n))
-    )
-  }
+  const unread = notifications.filter((n) => !n.readAt)
+  const read = notifications.filter((n) => n.readAt)
 
   const renderGroup = (list) => (
     <div className="notifications-group">
       {list.map((n) => (
-        <div key={n.id} className="notifications-row" onClick={() => markRead(n.id)}>
+        <div key={n.id} className="notifications-row" onClick={() => markNotificationRead(n.id)}>
           <NotificationItem notification={n} detail />
         </div>
       ))}
@@ -43,7 +30,7 @@ function Notifications() {
         <button
           type="button"
           className="btn btn-outline"
-          onClick={markAllRead}
+          onClick={markAllNotificationsRead}
           disabled={unread.length === 0}
         >
           Mark all as read
@@ -64,7 +51,7 @@ function Notifications() {
         </section>
       )}
 
-      {items.length === 0 && (
+      {notifications.length === 0 && (
         <div className="notifications-empty">
           <h2>You're all caught up</h2>
           <p>Notifications appear here when discussions you follow get new activity.</p>

@@ -66,6 +66,39 @@
   padding: 0.15rem;
 }
 
+.comment-notify {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-light);
+  background: var(--nav-bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+.comment-notify input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.comment-notify:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.comment-notify.active {
+  color: #ffffff;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border-color: transparent;
+}
+
 .comment-sort-btn {
   background: none;
   border: none;

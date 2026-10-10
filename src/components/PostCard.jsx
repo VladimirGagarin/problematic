@@ -1,12 +1,21 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FiMoreHorizontal, FiZap, FiLock, FiAlertTriangle } from 'react-icons/fi'
+import {
+  FiMoreHorizontal,
+  FiZap,
+  FiLock,
+  FiAlertTriangle,
+  FiFlag,
+  FiEyeOff,
+  FiCheck
+} from 'react-icons/fi'
 import CommentPanel from './CommentPanel'
 import DiscussionActions from './DiscussionActions'
 import { formatTypeLabel } from '../data/types'
 import { formatCategoryLabel } from '../data/categories'
 import { getComments } from '../data/samplePosts'
 import { formatTimeAgo } from '../utils/time'
+import { useInteractions } from '../context/interactions'
 import './PostCard.css'
 
 const REVEAL_ENABLED = false
@@ -16,8 +25,10 @@ function PostCard({ post }) {
   const [showHints, setShowHints] = useState(false)
   const [showComments, setShowComments] = useState(false)
   const [openMenu, setOpenMenu] = useState(false)
+  const [reported, setReported] = useState(false)
   const menuRef = useRef(null)
   const closeComments = useCallback(() => setShowComments(false), [])
+  const { hidePost } = useInteractions()
 
   const isUnsolved = post.solutionStatus === 'unsolved'
   const handle = `@${(post.author || 'user').toLowerCase().replace(/[^a-z0-9]+/g, '')}`
@@ -82,6 +93,28 @@ function PostCard({ post }) {
                 >
                   Open post
                 </Link>
+                <button
+                  type="button"
+                  className="menu-item"
+                  role="menuitem"
+                  disabled={reported}
+                  onClick={() => setReported(true)}
+                >
+                  {reported ? <FiCheck size={15} /> : <FiFlag size={15} />}
+                  {reported ? 'Reported — thanks' : 'Report'}
+                </button>
+                <button
+                  type="button"
+                  className="menu-item menu-item-danger"
+                  role="menuitem"
+                  onClick={() => {
+                    hidePost(post.id)
+                    setOpenMenu(false)
+                  }}
+                >
+                  <FiEyeOff size={15} />
+                  Not interested
+                </button>
               </div>
             )}
           </div>

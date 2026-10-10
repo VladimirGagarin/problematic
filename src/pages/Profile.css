@@ -14,7 +14,7 @@
   border: 1px solid var(--border);
   border-radius: 20px;
   background:
-    linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(236, 72, 153, 0.06)),
+    linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(16, 185, 129, 0.06)),
     var(--surface);
   backdrop-filter: blur(14px);
   padding: 1.5rem 1.6rem;
@@ -218,7 +218,7 @@
   border: 1px solid var(--border);
   border-radius: 20px;
   background:
-    linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(236, 72, 153, 0.06)),
+    linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(16, 185, 129, 0.06)),
     var(--surface);
   backdrop-filter: blur(14px);
   padding: 2.5rem 2rem;
@@ -251,4 +251,128 @@
   .profile-head {
     padding: 1.2rem 1rem;
   }
+}
+
+.profile-drafts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.8rem;
+}
+
+.profile-drafts-count {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
+.profile-drafts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.profile-draft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--nav-bg);
+  padding: 0.65rem 0.85rem;
+}
+
+.profile-draft-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.profile-draft-title {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile-draft-meta {
+  font-size: 0.75rem;
+  color: var(--text-light);
+  text-transform: capitalize;
+}
+
+.profile-draft-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.profile-draft-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-light);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+.profile-draft-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.profile-draft-delete:hover {
+  color: #f43f5e;
+  border-color: #f43f5e;
+}
+
+.profile-upsell {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  background:
+    linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(16, 185, 129, 0.06)),
+    var(--nav-bg);
+  padding: 1.1rem 1.2rem;
+  color: var(--accent);
+}
+
+.profile-upsell-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+}
+
+.profile-upsell-text strong {
+  color: var(--text);
+  font-size: 0.92rem;
+}
+
+.profile-upsell-text span {
+  color: var(--text-light);
+  font-size: 0.82rem;
+}
+
+.profile-empty-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.8rem;
 }

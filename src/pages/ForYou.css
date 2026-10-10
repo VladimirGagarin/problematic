@@ -16,7 +16,7 @@
   border: 1px solid var(--border);
   border-radius: 20px;
   background:
-    linear-gradient(135deg, rgba(99, 102, 241, 0.14), rgba(236, 72, 153, 0.08)),
+    linear-gradient(135deg, rgba(99, 102, 241, 0.14), rgba(16, 185, 129, 0.08)),
     var(--surface);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
@@ -134,7 +134,7 @@
 
 .side-join {
   background:
-    linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(236, 72, 153, 0.06)),
+    linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(16, 185, 129, 0.06)),
     var(--surface);
   display: flex;
   flex-direction: column;

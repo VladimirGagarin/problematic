@@ -7,7 +7,7 @@ export const samplePosts = [
     secondaryCategories: ['algebra'],
     difficulty: 'medium',
     problem: '2, 6, 12, 20, 30, ?',
-    author: 'Room24 Community',
+    author: 'Problematic Team',
     createdAt: '2026-10-09T00:00:00Z',
     voteCount: 245,
     commentCount: 18,
@@ -88,7 +88,7 @@ export const samplePosts = [
     difficulty: 'medium',
     problem:
       'In a village, every pair of neighbours shook hands exactly once. If there were 28 handshakes in total, how many neighbours are there?',
-    author: 'Room24 Community',
+    author: 'Problematic Team',
     createdAt: '2026-10-09T06:00:00Z',
     voteCount: 98,
     commentCount: 7,
@@ -919,6 +919,385 @@ export const samplePosts = [
     ],
     solution:
       '23 people: the chance of a shared birthday already exceeds 50%.'
+  },
+  {
+    id: 'calc-01',
+    title: 'The Telescoping Sum',
+    type: 'challenge',
+    category: 'calculus',
+    difficulty: 'easy',
+    problem: 'Compute \u03a3_{k=1}^{\u221e} 1 / (k(k+1)).',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T00:00:00Z',
+    voteCount: 88,
+    commentCount: 6,
+    solutionStatus: 'solved',
+    hints: [
+      'Write 1/(k(k+1)) as a difference of two fractions.',
+      'Most terms cancel in a long sum.'
+    ],
+    solution: '1/(k(k+1)) = 1/k - 1/(k+1), so the sum telescopes to 1.'
+  },
+  {
+    id: 'calc-02',
+    title: 'A Sneaky Symmetry',
+    type: 'challenge',
+    category: 'calculus',
+    difficulty: 'medium',
+    problem: 'Calculate \u222b_{0}^{\u03c0} sin x / (sin x + cos x) dx.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T00:20:00Z',
+    voteCount: 119,
+    commentCount: 9,
+    solutionStatus: 'solved',
+    hints: [
+      'Substitute u = \u03c0 - x.',
+      'In the second integral you get cos x / (sin x + cos x).'
+    ],
+    solution:
+      'By symmetry the integral equals half of \u222b_{0}^{\u03c0} 1 dx, which is \u03c0/2.'
+  },
+  {
+    id: 'calc-03',
+    title: 'The Odd One Vanishes',
+    type: 'counterexample-hunt',
+    category: 'calculus',
+    difficulty: 'medium',
+    problem: 'Evaluate \u222b_{-2}^{2} x\u00b3 / (e\u02e3 + 1) dx. It cancels more than it seems.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T00:40:00Z',
+    voteCount: 96,
+    commentCount: 7,
+    solutionStatus: 'solved',
+    hints: [
+      'Check what 1/(e\u02e3 + 1) + 1/(1 + e\u207b\u02e3) equals.',
+      'The integral of an odd function over a symmetric interval is zero.'
+    ],
+    solution:
+      'The integrand\u2019s odd part vanishes, and the remaining average is x\u00b3/2 over \u22122..2, giving 0.'
+  },
+  {
+    id: 'calc-04',
+    title: 'Which Grows Faster?',
+    type: 'challenge',
+    category: 'analysis',
+    difficulty: 'medium',
+    problem:
+      'For large x, which wins: x\u00b9\u2070 or e^{x/10}? Prove it.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T01:00:00Z',
+    voteCount: 104,
+    commentCount: 5,
+    solutionStatus: 'solved',
+    hints: [
+      'Compare using the ratio of logs.',
+      'Use l\u2019H\u00f4pital repeatedly.'
+    ],
+    solution:
+      'e^{x/10} wins: repeated l\u2019H\u00f4pital makes the polynomial vanish against the exponential.'
+  },
+  {
+    id: 'calc-05',
+    title: 'The Open-Top Box',
+    type: 'optimization-problem',
+    category: 'calculus',
+    difficulty: 'medium',
+    problem:
+      'Cut identical squares of side x from the corners of a 30 \u00d7 30 sheet, then fold up the sides. Maximise the volume of the box.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T01:20:00Z',
+    voteCount: 143,
+    commentCount: 11,
+    solutionStatus: 'solved',
+    hints: [
+      'Volume is x(30 - 2x)\u00b2.',
+      'Maximise where the derivative is zero and the boundary checks fail.'
+    ],
+    solution: 'V(x) = x(30 - 2x)\u00b2 peaks at x = 5, giving V = 2000.'
+  },
+  {
+    id: 'calc-06',
+    title: 'The Largest Rectangle Under a Parabola',
+    type: 'optimization-problem',
+    category: 'calculus',
+    difficulty: 'medium',
+    problem:
+      'What is the area of the largest rectangle with one side on the x-axis that fits under the parabola y = 4 - x\u00b2?',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T01:40:00Z',
+    voteCount: 121,
+    commentCount: 8,
+    solutionStatus: 'solved',
+    hints: [
+      'Let the corner have coordinate x, so the area is 2x(4 - x\u00b2).',
+      'Differentiate, set to zero, and rule out endpoints.'
+    ],
+    solution: 'Max at x = 2/\u221a3 with area 32/(3\u221a3).'
+  },
+  {
+    id: 'calc-07',
+    title: 'The Derivative of x^x',
+    type: 'proof',
+    category: 'calculus',
+    difficulty: 'medium',
+    problem: 'Differentiate f(x) = x\u02e3 for x > 0, carefully.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T02:00:00Z',
+    voteCount: 132,
+    commentCount: 7,
+    solutionStatus: 'solved',
+    hints: [
+      'Log-differentiate: take ln of both sides first.',
+      'Use the chain rule on ln y = x ln x.'
+    ],
+    solution: 'f\u2032(x) = x\u02e3 (\u2009ln x + 1\u2009).'
+  },
+  {
+    id: 'calc-08',
+    title: 'The Power Tower',
+    type: 'challenge',
+    category: 'calculus',
+    difficulty: 'hard',
+    problem: 'Find the derivative of y = x^{x\u02e3} (x raised to x\u02e3, which is itself x raised to the x power).',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T02:20:00Z',
+    voteCount: 141,
+    commentCount: 10,
+    solutionStatus: 'solved',
+    hints: [
+      'Take logs twice, or write x^{x\u02e3} as exp(x\u02e3 ln x).',
+      'Differentiate the exponent with the product rule.'
+    ],
+    solution:
+      'y\u2032 = x^{x\u02e3} \u00b7 x\u02e3 \u00b7 (ln\u00b2x + ln x + 1/x).'
+  },
+  {
+    id: 'calc-09',
+    title: 'The Mean Value c',
+    type: 'proof-verification',
+    category: 'real-analysis',
+    difficulty: 'medium',
+    problem:
+      'For f(x) = x\u00b3 on [0, 2], the mean value theorem promises a c where f\u2032(c) equals the secant slope. Find c.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T02:40:00Z',
+    voteCount: 79,
+    commentCount: 4,
+    solutionStatus: 'solved',
+    hints: [
+      'The secant slope is (8 - 0)/2 = 4.',
+      'Solve 3c\u00b2 = 4.'
+    ],
+    solution: 'c = 2/\u221a3, and indeed it lies inside (0, 2).'
+  },
+  {
+    id: 'calc-10',
+    title: 'Stationary Points on a Hill',
+    type: 'challenge',
+    category: 'calculus',
+    difficulty: 'easy',
+    problem:
+      'Classify all stationary points of f(x) = x\u00b3 - 3x\u00b2 + 2 as maxima, minima or slope-less points.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T03:00:00Z',
+    voteCount: 87,
+    commentCount: 5,
+    solutionStatus: 'solved',
+    hints: [
+      'Solve f\u2032(x) = 0 = 3x\u00b2 - 6x.',
+      'Test with the second derivative.'
+    ],
+    solution:
+      'Local max at x = 0 (f\u2033 < 0), local min at x = 2 (f\u2033 > 0).'
+  },
+  {
+    id: 'calc-11',
+    title: 'Where Does It Bend?',
+    type: 'challenge',
+    category: 'calculus',
+    difficulty: 'medium',
+    problem:
+      'Find all inflection points of f(x) = x\u2074 - 8x\u00b2.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T03:20:00Z',
+    voteCount: 82,
+    commentCount: 4,
+    solutionStatus: 'solved',
+    hints: [
+      'Inflections happen where the concavity changes, i.e. f\u2033\u2032(s) = 0 with a sign change.',
+      'f\u2033\u2032(x) = 12x\u00b2 - 16.'
+    ],
+    solution:
+      'Inflection points at x = \u00b1\u221a(4/3), where f\u2033\u2032(x) = 0 and changes sign.'
+  },
+  {
+    id: 'calc-12',
+    title: 'The Sum Becomes an Integral',
+    type: 'proof',
+    category: 'calculus',
+    difficulty: 'medium',
+    problem:
+      'Recognise the limit as an integral and evaluate it: lim_{n\u2192\u221e} \u03a3_{k=1}^{n} (k/n)\u00b2 \u00b7 (1/n).',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T03:40:00Z',
+    voteCount: 113,
+    commentCount: 6,
+    solutionStatus: 'solved',
+    hints: [
+      'This is a right Riemann sum for x\u00b2.',
+      'Identify the interval [0, 1].'
+    ],
+    solution: 'It equals \u222b\u2080\u00b9 x\u00b2 dx = 1/3.'
+  },
+  {
+    id: 'calc-13',
+    title: 'Converges by Comparison',
+    type: 'proof',
+    category: 'real-analysis',
+    difficulty: 'medium',
+    problem: 'Show that \u03a3_{n=1}^{\u221e} 1/(n\u00b2 + 1) converges.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T04:00:00Z',
+    voteCount: 95,
+    commentCount: 5,
+    solutionStatus: 'solved',
+    hints: [
+      'Compare each term with 1/n\u00b2.',
+      'Recall that \u03a3 1/n\u00b2 converges (it is \u03c0\u00b2/6).'
+    ],
+    solution:
+      'Since 1/(n\u00b2+1) \u2264 1/n\u00b2 and \u03a3 1/n\u00b2 converges, comparison proves convergence.'
+  },
+  {
+    id: 'calc-14',
+    title: 'The Harmonic Series Discovers Infinity',
+    type: 'proof',
+    category: 'analysis',
+    difficulty: 'medium',
+    problem: 'Prove that the harmonic series \u03a3 1/n diverges.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T04:20:00Z',
+    voteCount: 158,
+    commentCount: 12,
+    solutionStatus: 'solved',
+    hints: [
+      'Group 1/n into blocks 1, (1/2), (1/3+1/4), (1/5+\u2026+1/8), \u2026',
+      'Each block after the first sums to at least 1/2.'
+    ],
+    solution:
+      'The grouped blocks each contribute \u2265 1/2, so partial sums grow without bound.'
+  },
+  {
+    id: 'calc-15',
+    title: 'The Sharp Corner',
+    type: 'thought-experiment',
+    category: 'calculus',
+    difficulty: 'easy',
+    problem: 'Why is f(x) = |x| not differentiable at 0? Show it with the difference quotient.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T04:40:00Z',
+    voteCount: 101,
+    commentCount: 6,
+    solutionStatus: 'solved',
+    hints: [
+      'Compute the quotient (f(h) - f(0))/h for h > 0 and h < 0.',
+      'The two-sided limit must exist for differentiability.'
+    ],
+    solution:
+      'The quotient is 1 from the right and -1 from the left, so no two-sided limit exists.'
+  },
+  {
+    id: 'calc-16',
+    title: 'The Tangent at Three',
+    type: 'challenge',
+    category: 'calculus',
+    difficulty: 'easy',
+    problem: 'Write the equation of the tangent line to y = x\u00b2 at x = 3.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T05:00:00Z',
+    voteCount: 72,
+    commentCount: 3,
+    solutionStatus: 'solved',
+    hints: [
+      'The slope at x is 2x.',
+      'Use point-slope form through (3, 9).'
+    ],
+    solution: 'y = 6x - 9.'
+  },
+  {
+    id: 'calc-17',
+    title: 'The Sliding Ladder',
+    type: 'mathematical-model',
+    category: 'calculus',
+    difficulty: 'medium',
+    problem:
+      'A 10 m ladder leans against a wall; its foot slides away at 1 m/s. How fast does the top fall when the foot is 6 m from the wall?',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T05:20:00Z',
+    voteCount: 126,
+    commentCount: 8,
+    solutionStatus: 'solved',
+    hints: [
+      'Relate the foot distance x and height y by x\u00b2 + y\u00b2 = 100.',
+      'Differentiate implicitly with respect to time.'
+    ],
+    solution:
+      'dy/dt = -(x/y)(dx/dt). With x = 6, y = 8, dx/dt = 1, the height drops at 0.75 m/s.'
+  },
+  {
+    id: 'calc-18',
+    title: 'Asymptote Watch',
+    type: 'challenge',
+    category: 'calculus',
+    difficulty: 'medium',
+    problem: 'Find all vertical and horizontal asymptotes of f(x) = (x\u00b2 + 1)/(x - 2).',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T05:40:00Z',
+    voteCount: 77,
+    commentCount: 4,
+    solutionStatus: 'solved',
+    hints: [
+      'Vertical asymptotes occur where the denominator vanishes and the numerator does not.',
+      'For large x, divide numerator and denominator by x\u207b\u00b9 carefully.'
+    ],
+    solution:
+      'Vertical asymptote x = 2; no horizontal asymptote since the degree of the numerator is larger.'
+  },
+  {
+    id: 'calc-19',
+    title: 'Partial Fractions Lunch',
+    type: 'challenge',
+    category: 'calculus',
+    difficulty: 'medium',
+    problem: 'Evaluate \u222b 2/(x\u00b2 - 1) dx.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T06:00:00Z',
+    voteCount: 83,
+    commentCount: 4,
+    solutionStatus: 'solved',
+    hints: [
+      'Factor x\u00b2 - 1 = (x - 1)(x + 1).',
+      'Write 2/(x\u00b2 - 1) as A/(x - 1) + B/(x + 1).'
+    ],
+    solution: 'ln|(x - 1)/(x + 1)| + C.'
+  },
+  {
+    id: 'calc-20',
+    title: 'The Zero-to-Zero Power',
+    type: 'paradox',
+    category: 'calculus',
+    difficulty: 'medium',
+    problem: 'What is lim_{x\u21920\u207a} x\u02e3? It cannot simply be \u201c0\u2070\u201d.',
+    author: 'Problematic Community',
+    createdAt: '2026-10-11T06:20:00Z',
+    voteCount: 167,
+    commentCount: 13,
+    solutionStatus: 'solved',
+    hints: [
+      'Exponential trick: write x\u02e3 = e^{x ln x}.',
+      'Evaluate lim x ln x first.'
+    ],
+    solution: 'x ln x \u2192 0, so x\u02e3 = e^{x ln x} \u2192 e\u2070 = 1.'
   }
 ]
 

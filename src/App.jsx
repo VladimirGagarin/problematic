@@ -7,6 +7,8 @@ import Discoveries from './pages/Discoveries'
 import Profile from './pages/Profile'
 import Notifications from './pages/Notifications'
 import PostPage from './pages/PostPage'
+import CreatePage from './pages/CreatePage'
+import CheckProof from './pages/CheckProof'
 
 function App() {
   return (
@@ -21,6 +23,8 @@ function App() {
             <Route path="/discoveries" element={<Discoveries />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/notifications" element={<Notifications />} />
+            <Route path="/create" element={<CreatePage />} />
+            <Route path="/checkproof" element={<CheckProof />} />
           </Route>
         </Routes>
       </InteractionProvider>

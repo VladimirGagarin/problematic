@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { FiPlus, FiLogOut, FiLogIn } from 'react-icons/fi'
 import SearchBar from './SearchBar'
 import NotificationBell from './NotificationBell'
@@ -7,6 +7,7 @@ import { useAuth } from '../context/auth'
 
 function Header() {
   const { user, isAuthenticated, openPrompt, requirePremium, signOut } = useAuth()
+  const navigate = useNavigate()
   const [openAccount, setOpenAccount] = useState(false)
   const wrapRef = useRef(null)
 
@@ -29,7 +30,10 @@ function Header() {
   }, [openAccount])
 
   const handleCreate = () => {
-    if (requirePremium()) openPrompt('post')
+    if (requirePremium()) {
+      setOpenAccount(false)
+      navigate('/create')
+    }
   }
 
   const initial = (user?.name || 'G').charAt(0)
