@@ -15,6 +15,7 @@ function CommentPanel({ post, open, onClose }) {
   const [likedIds, setLikedIds] = useState(() => new Set())
   const [sortMode, setSortMode] = useState('newest')
   const [replyTo, setReplyTo] = useState(null)
+  const [visibleCount, setVisibleCount] = useState(4)
   const inputRef = useRef(null)
 
   useEffect(() => {
@@ -145,7 +146,9 @@ function CommentPanel({ post, open, onClose }) {
     )
   }
 
-  const topLevel = sortList(comments.filter((c) => !c.parentId))
+  const topLevelAll = sortList(comments.filter((c) => !c.parentId))
+  const topLevel = topLevelAll.slice(0, visibleCount)
+  const remaining = topLevelAll.length - topLevel.length
 
   return (
     <section className="comment-panel" aria-label={`Discussion on ${post.title}`}>
@@ -202,6 +205,15 @@ function CommentPanel({ post, open, onClose }) {
           </p>
         ) : (
           topLevel.map((comment) => renderComment(comment, 0))
+        )}
+        {remaining > 0 && (
+          <button
+            type="button"
+            className="comment-panel-more"
+            onClick={() => setVisibleCount((count) => count + 4)}
+          >
+            See more comments ({remaining})
+          </button>
         )}
       </div>
 

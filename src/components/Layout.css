@@ -157,6 +157,89 @@
   stroke: currentColor;
 }
 
+.mobile-search-btn {
+  display: none;
+}
+
+.search-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: calc(3.5rem + env(safe-area-inset-top)) 1rem 1rem;
+}
+
+.search-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 20, 43, 0.45);
+  backdrop-filter: blur(12px) saturate(120%);
+  -webkit-backdrop-filter: blur(12px) saturate(120%);
+  animation: search-fade 0.18s ease;
+}
+
+.search-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(560px, 100%);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  animation: search-drop 0.2s ease;
+}
+
+.search-modal-panel .search-bar {
+  flex: 1;
+  padding: 0.75rem 1.1rem;
+  box-shadow: 0 20px 50px rgba(20, 20, 43, 0.3);
+}
+
+.search-modal-panel .search-bar-input {
+  font-size: 1rem;
+}
+
+.search-modal-close {
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.search-modal-close:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+@keyframes search-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes search-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
 .notification-badge {
   position: absolute;
   top: -2px;
@@ -429,16 +512,25 @@
 
 @media (max-width: 767px) {
   .top-banner-content {
-    padding: 0.6rem 0.9rem;
-    gap: 0.6rem;
+    padding: 0.5rem 0.8rem;
+    gap: 0.5rem;
   }
 
   .top-banner-search {
     display: none;
   }
 
+  .mobile-search-btn {
+    display: flex;
+  }
+
   .brand-name {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
+  }
+
+  .top-banner-icons {
+    margin-left: auto;
+    gap: 0.1rem;
   }
 
   .create-btn span {
@@ -456,6 +548,12 @@
     right: 0.75rem;
     top: 4rem;
     width: auto;
+  }
+}
+
+@media (max-width: 400px) {
+  .brand-name {
+    display: none;
   }
 }
 

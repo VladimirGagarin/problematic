@@ -20,7 +20,7 @@ import './PostCard.css'
 
 const REVEAL_ENABLED = false
 
-function PostCard({ post }) {
+function PostCard({ post, detail = false }) {
   const [showAnswer, setShowAnswer] = useState(false)
   const [showHints, setShowHints] = useState(false)
   const [showComments, setShowComments] = useState(false)
@@ -61,18 +61,16 @@ function PostCard({ post }) {
 
   return (
     <article className="x-post" data-post-id={post.id}>
-      <div className="x-avatar" aria-hidden="true">
-        {post.author?.charAt(0) || '?'}
-      </div>
-
-      <div className="x-body">
-        <header className="x-head">
-          <div className="x-user">
-            <span className="x-name">{post.author}</span>
-            <span className="x-handle">{handle}</span>
-            <span className="x-time">· {formatTimeAgo(post.createdAt, { short: true })}</span>
-          </div>
-          <div className="x-overflow" ref={menuRef}>
+      <header className="post-card-header">
+        <div className="x-avatar" aria-hidden="true">
+          {post.author?.charAt(0) || '?'}
+        </div>
+        <div className="post-card-user">
+          <span className="x-name">{post.author}</span>
+          <span className="x-handle">{handle}</span>
+          <span className="x-time">· {formatTimeAgo(post.createdAt, { short: true })}</span>
+        </div>
+        <div className="x-overflow" ref={menuRef}>
             <button
               type="button"
               className="x-icon-btn"
@@ -85,14 +83,16 @@ function PostCard({ post }) {
             </button>
             {openMenu && (
               <div className="x-overflow-menu" role="menu">
-                <Link
-                  to={`/post/${post.id}`}
-                  className="menu-item"
-                  role="menuitem"
-                  onClick={() => setOpenMenu(false)}
-                >
-                  Open post
-                </Link>
+                {!detail && (
+                  <Link
+                    to={`/post/${post.id}`}
+                    className="menu-item"
+                    role="menuitem"
+                    onClick={() => setOpenMenu(false)}
+                  >
+                    Open post
+                  </Link>
+                )}
                 <button
                   type="button"
                   className="menu-item"
@@ -120,7 +120,8 @@ function PostCard({ post }) {
           </div>
         </header>
 
-        <div className="x-tags">
+        <div className="post-card-content">
+          <div className="x-tags">
           {post.type && <span className="x-tag">{formatTypeLabel(post.type)}</span>}
           {post.category && <span className="x-tag">{formatCategoryLabel(post.category)}</span>}
           {post.secondaryCategories?.slice(0, 1).map((cat) => (

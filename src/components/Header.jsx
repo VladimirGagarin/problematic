@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { FiPlus, FiLogOut, FiLogIn } from 'react-icons/fi'
 import SearchBar from './SearchBar'
 import NotificationBell from './NotificationBell'
+import MobileSearch from './MobileSearch'
 import { useAuth } from '../context/auth'
 
 function Header() {
@@ -51,6 +52,8 @@ function Header() {
         </div>
 
         <div className="top-banner-icons">
+          <MobileSearch />
+
           <button type="button" className="btn btn-accent create-btn" onClick={handleCreate}>
             <FiPlus size={16} />
             <span>Create</span>

@@ -47,7 +47,7 @@ function PostPage() {
   return (
     <div className="post-page-grid">
       <div className="post-page-main">
-        <PostCard post={post} />
+        <PostCard post={post} detail />
       </div>
 
       <aside className="post-page-side">

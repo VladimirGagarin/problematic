@@ -2,7 +2,12 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { FiSearch } from 'react-icons/fi'
 
-function SearchBar({ className = '', autoFocus = false, placeholder = 'Search problems, ideas and topics…' }) {
+function SearchBar({
+  className = '',
+  autoFocus = false,
+  placeholder = 'Search problems, ideas and topics…',
+  onSubmitted
+}) {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
 
@@ -10,6 +15,7 @@ function SearchBar({ className = '', autoFocus = false, placeholder = 'Search pr
     e.preventDefault()
     const q = query.trim()
     navigate(q ? `/discoveries?q=${encodeURIComponent(q)}` : '/discoveries')
+    onSubmitted?.()
   }
 
   return (

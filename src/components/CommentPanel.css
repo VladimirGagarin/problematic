@@ -157,6 +157,22 @@
   padding: 1.5rem 0;
 }
 
+.comment-panel-more {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-family: var(--sans);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.35rem 0.2rem;
+  cursor: pointer;
+}
+
+.comment-panel-more:hover {
+  text-decoration: underline;
+}
+
 .comment-item {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -351,4 +367,57 @@
 
 .comment-submit:not(:disabled):hover {
   background: var(--accent-hover);
+}
+
+@media (max-width: 640px) {
+  .comment-panel {
+    border-radius: 12px;
+  }
+
+  .comment-panel-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.7rem 0.85rem;
+  }
+
+  .comment-panel-title {
+    font-size: 0.95rem;
+  }
+
+  .comment-panel-header-right {
+    gap: 0.35rem;
+    margin-left: auto;
+  }
+
+  .comment-notify {
+    padding: 0.4rem;
+  }
+
+  .comment-notify span {
+    display: none;
+  }
+
+  .comment-panel-list {
+    max-height: 60vh;
+    padding: 0.85rem;
+    gap: 0.9rem;
+  }
+
+  .comment-item {
+    gap: 0.55rem;
+  }
+
+  .comment-replies {
+    margin-left: 0.5rem;
+    padding-left: 0.6rem;
+    gap: 0.8rem;
+  }
+
+  .comment-panel-form {
+    padding: 0.7rem 0.85rem;
+  }
+
+  .comment-input {
+    font-size: 0.9rem;
+  }
 }
