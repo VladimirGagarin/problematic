@@ -1,0 +1,36 @@
+.post-page {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.post-page-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.post-page-note {
+  margin: 0;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.85rem;
+}
+
+.not-found {
+  border: 1px dashed var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.not-found-title {
+  font-family: var(--display);
+  font-size: 1.7rem;
+  margin: 0 0 0.4rem;
+}
+
+.not-found-copy {
+  margin: 0 0 1.4rem;
+  color: var(--text-light);
+}

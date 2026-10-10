@@ -1,0 +1,169 @@
+.discoveries {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.discoveries-head {
+  padding: 0.25rem 0.15rem;
+}
+
+.discoveries-title {
+  font-family: var(--display);
+  font-size: 2rem;
+  line-height: 1.15;
+  margin: 0 0 0.3rem;
+}
+
+.discoveries-sub {
+  margin: 0;
+  color: var(--text-light);
+}
+
+.discoveries-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 1.1rem;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  backdrop-filter: blur(14px);
+}
+
+.discoveries-search:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.discoveries-search-icon {
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.discoveries-search input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.discoveries-search input::placeholder {
+  color: var(--text-light);
+}
+
+.discoveries-subjects,
+.discoveries-controls {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  backdrop-filter: blur(14px);
+  padding: 1rem 1.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.8rem 1.2rem;
+}
+
+.discoveries-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.discoveries-field-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-light);
+}
+
+.discoveries-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.discoveries-chip {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.375rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-light);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background-color 0.15s;
+}
+
+.discoveries-chip:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.discoveries-chip.active {
+  color: #ffffff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+
+.discoveries-select {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.5rem 0.7rem;
+  cursor: pointer;
+  font-family: var(--sans);
+}
+
+.discoveries-count {
+  font-size: 0.8125rem;
+  color: var(--text-light);
+  font-weight: 600;
+}
+
+.discoveries-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.discoveries-empty {
+  border: 1px dashed var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+}
+
+.discoveries-empty h2 {
+  font-family: var(--display);
+  margin: 0 0 0.3rem;
+}
+
+.discoveries-empty p {
+  margin: 0;
+  color: var(--text-light);
+}
+
+@media (max-width: 640px) {
+  .discoveries-title {
+    font-size: 1.6rem;
+  }
+
+  .discoveries-controls {
+    align-items: stretch;
+  }
+
+  .discoveries-field {
+    flex: 1 1 100%;
+  }
+}

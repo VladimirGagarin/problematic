@@ -1,16 +1,32 @@
-# React + Vite
+# Problematic
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**Think. Wonder. Prove.**
 
-Currently, two official plugins are available:
+*UNA DISPUTEMUS — Let's discuss together.*
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+A mathematical discovery and discussion platform. Explore problems, challenge ideas and discover how others think.
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19 + JavaScript (JSX)
+- CSS (plain, per-component)
+- Vite
+- React Router v7
 
-## Expanding the ESLint configuration
+## Getting started
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev
+```
+
+## Scripts
+
+- `npm run dev` — start the dev server
+- `npm run build` — production build
+- `npm run lint` — ESLint
+- `npm run preview` — preview the production build
+
+## Status
+
+Frontend milestone: header + For You / Discoveries / Profile navigation, reusable post cards, search and filters, local discussions (comments, replies, sort), sample notifications, follow/save interactions and guest/prompt access rules. Backend, auth and premium posting arrive in later stages (VA BENE 8–9).
