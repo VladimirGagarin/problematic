@@ -67,6 +67,19 @@
   padding: 0.4rem 0 1rem;
 }
 
+.foryou-sentinel {
+  height: 1px;
+}
+
+.foryou-end {
+  margin: 0;
+  padding: 0.6rem 0 1.2rem;
+  text-align: center;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-light);
+}
+
 .foryou-sidebar {
   position: sticky;
   top: 1.25rem;

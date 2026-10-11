@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import PostCard from '../components/PostCard'
+import PostCard, { PostCardSkeleton } from '../components/PostCard'
 import TopicChip from '../components/TopicChip'
 import { shuffleArray } from '../utils/shuffle'
 import { formatCompactNumber } from '../utils/time'
@@ -9,6 +9,8 @@ import { useInteractions } from '../context/interactions'
 import './ForYou.css'
 
 const PAGE_SIZE = 3
+const GHOST_COUNT = 2
+const LOAD_DELAY = 650
 
 const HERO_SHORTCUTS = [
   { label: 'Number Theory', category: 'number-theory' },
@@ -42,16 +44,69 @@ const POPULAR_SUBJECTS = [
 
 function ForYou() {
   const [visible, setVisible] = useState(PAGE_SIZE)
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
   const [shortcuts] = useState(() => shuffleArray(HERO_SHORTCUTS))
   const [subjects] = useState(() => shuffleArray(POPULAR_SUBJECTS))
   const { openPrompt } = useAuth()
   const { allPosts, hiddenIds } = useInteractions()
+  const sentinelRef = useRef(null)
+  const pendingRef = useRef(false)
 
-  const pool = allPosts.filter((p) => !hiddenIds.has(p.id))
-  const trending = [...pool].sort((a, b) => b.voteCount - a.voteCount).slice(0, 3)
-  const recent = [...pool]
-    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-    .slice(0, 3)
+  const pool = useMemo(
+    () => allPosts.filter((p) => !hiddenIds.has(p.id)),
+    [allPosts, hiddenIds]
+  )
+
+  const poolLengthRef = useRef(pool.length)
+  useEffect(() => {
+    poolLengthRef.current = pool.length
+  }, [pool.length])
+
+  const trending = useMemo(
+    () => [...pool].sort((a, b) => b.voteCount - a.voteCount).slice(0, 3),
+    [pool]
+  )
+  const recent = useMemo(
+    () =>
+      [...pool]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 3),
+    [pool]
+  )
+
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), LOAD_DELAY)
+    return () => clearTimeout(timer)
+  }, [])
+
+  const loadMore = useCallback(() => {
+    if (pendingRef.current) return
+    pendingRef.current = true
+    setLoadingMore(true)
+    setTimeout(() => {
+      setVisible((v) => Math.min(v + PAGE_SIZE, poolLengthRef.current))
+      setLoadingMore(false)
+      pendingRef.current = false
+    }, LOAD_DELAY)
+  }, [])
+
+  const hasMore = visible < pool.length
+
+  useEffect(() => {
+    if (loading || !hasMore) return undefined
+    const node = sentinelRef.current
+    if (!node || typeof IntersectionObserver === 'undefined') return undefined
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) loadMore()
+      },
+      { rootMargin: '400px 0px' }
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [loading, hasMore, loadMore])
 
   return (
     <div className="foryou">
@@ -70,19 +125,27 @@ function ForYou() {
         </section>
 
         <div className="foryou-stream">
-          {pool.slice(0, visible).map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-          {visible < pool.length && (
-            <div className="foryou-more">
-              <button
-                type="button"
-                className="btn btn-outline"
-                onClick={() => setVisible((v) => v + PAGE_SIZE)}
-              >
-                Load more problems
-              </button>
-            </div>
+          {loading
+            ? Array.from({ length: PAGE_SIZE }).map((_, i) => (
+                <PostCardSkeleton key={`init-${i}`} />
+              ))
+            : pool.slice(0, visible).map((post) => <PostCard key={post.id} post={post} />)}
+
+          {!loading &&
+            loadingMore &&
+            Array.from({ length: GHOST_COUNT }).map((_, i) => (
+              <PostCardSkeleton key={`ghost-${i}`} />
+            ))}
+
+          {!loading && hasMore && (
+            <div ref={sentinelRef} className="foryou-sentinel" aria-hidden="true" />
+          )}
+
+          {!loading && !hasMore && pool.length > 0 && (
+            <p className="foryou-end">
+              {'You\u2019ve reached the end \u2014 '}
+              {pool.length} problems.
+            </p>
           )}
         </div>
       </div>

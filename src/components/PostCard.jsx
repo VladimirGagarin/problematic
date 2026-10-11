@@ -221,4 +221,40 @@ function PostCard({ post, detail = false }) {
   )
 }
 
+export function PostCardSkeleton() {
+  return (
+    <article className="x-post x-post-skeleton" aria-hidden="true">
+      <header className="post-card-header">
+        <div className="skeleton skeleton-avatar" />
+        <div className="post-card-user">
+          <span className="skeleton skeleton-line skeleton-name" />
+          <span className="skeleton skeleton-line skeleton-handle" />
+        </div>
+      </header>
+
+      <div className="post-card-content">
+        <div className="x-tags">
+          <span className="skeleton skeleton-pill" />
+          <span className="skeleton skeleton-pill" />
+          <span className="skeleton skeleton-pill" />
+        </div>
+
+        <span className="skeleton skeleton-line skeleton-title" />
+
+        <div className="x-problem skeleton-problem">
+          <span className="skeleton skeleton-line skeleton-cta" />
+          <span className="skeleton skeleton-line skeleton-problem-text" />
+          <span className="skeleton skeleton-line skeleton-problem-text short" />
+        </div>
+
+        <div className="x-actions skeleton-actions">
+          <span className="skeleton skeleton-pill" />
+          <span className="skeleton skeleton-pill" />
+          <span className="skeleton skeleton-pill" />
+        </div>
+      </div>
+    </article>
+  )
+}
+
 export default PostCard

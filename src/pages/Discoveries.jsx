@@ -1,183 +1,262 @@
-import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import { FiSearch, FiSmile, FiZap } from 'react-icons/fi'
+import { useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
+import {
+  FiSearch,
+  FiSmile,
+  FiZap,
+  FiChevronRight,
+  FiChevronLeft,
+  FiPlus
+} from 'react-icons/fi'
 import PostCard from '../components/PostCard'
-import { categories, formatCategoryLabel } from '../data/categories'
-import { types, formatTypeLabel } from '../data/types'
+import { types, categories, formatTypeLabel, formatCategoryLabel } from '../store'
 import { funFacts, formulasAndTricks } from '../data/mathExtras'
-import { shuffleArray } from '../utils/shuffle'
 import { useInteractions } from '../context/interactions'
 import './Discoveries.css'
 
-const DIFFICULTIES = ['easy', 'medium', 'hard']
 const SORTS = [
-  { value: 'popular', label: 'Popular' },
   { value: 'recent', label: 'Recent' },
+  { value: 'popular', label: 'Popular' },
   { value: 'discussed', label: 'Most discussed' }
 ]
 
+const MENU_TYPES = types.filter((type) => type !== 'investigation')
+
 function Discoveries() {
   const [params, setParams] = useSearchParams()
-  const [subjects] = useState(() => shuffleArray(categories.slice(0, 8)))
   const { allPosts, hiddenIds } = useInteractions()
   const [query, setQuery] = useState('')
 
-  const q = params.get('q') || ''
-  const category = params.get('category') || ''
   const type = params.get('type') || ''
-  const difficulty = params.get('difficulty') || ''
-  const sort = params.get('sort') || 'popular'
+  const category = params.get('category') || ''
+  const sort = params.get('sort') || 'recent'
 
-  const setParam = (key, value) => {
-    const next = new URLSearchParams(params)
-    if (value) {
-      next.set(key, value)
-    } else {
-      next.delete(key)
-    }
-    setParams(next, { replace: true })
+  const selectType = (next) => {
+    const p = new URLSearchParams(params)
+    p.set('type', next)
+    p.delete('category')
+    setParams(p, { replace: true })
   }
 
-  const handleSearch = (e) => {
-    e.preventDefault()
-    setParam('q', query.trim())
+  const selectCategory = (next) => {
+    const p = new URLSearchParams(params)
+    p.set('category', next)
+    setParams(p, { replace: true })
   }
 
-  let posts = allPosts.filter((post) => {
-    if (hiddenIds.has(post.id)) return false
-    if (category && !(post.category === category || (post.secondaryCategories || []).includes(category))) {
-      return false
-    }
-    if (type && post.type !== type) return false
-    if (difficulty && post.difficulty !== difficulty) return false
-    if (q) {
-      const hay = `${post.title} ${post.problem} ${post.author} ${post.tags?.join(' ') || ''}`.toLowerCase()
-      if (!hay.includes(q.toLowerCase())) return false
-    }
-    return true
-  })
+  const backToCategories = () => {
+    const p = new URLSearchParams(params)
+    p.delete('category')
+    setParams(p, { replace: true })
+  }
 
-  posts = [...posts].sort((a, b) => {
-    if (sort === 'recent') return new Date(b.createdAt) - new Date(a.createdAt)
-    if (sort === 'discussed') return b.commentCount - a.commentCount
-    return b.voteCount - a.voteCount
-  })
+  const typeCounts = useMemo(() => {
+    const map = {}
+    allPosts.forEach((post) => {
+      if (hiddenIds.has(post.id)) return
+      map[post.type] = (map[post.type] || 0) + 1
+    })
+    return map
+  }, [allPosts, hiddenIds])
+
+  const categoryCounts = useMemo(() => {
+    const map = {}
+    if (!type) return map
+    allPosts.forEach((post) => {
+      if (hiddenIds.has(post.id) || post.type !== type) return
+      map[post.category] = (map[post.category] || 0) + 1
+    })
+    return map
+  }, [allPosts, hiddenIds, type])
+
+  const questions = useMemo(() => {
+    if (!category) return []
+    const term = query.trim().toLowerCase()
+    const filtered = allPosts.filter((post) => {
+      if (hiddenIds.has(post.id)) return false
+      if (type && post.type !== type) return false
+      if (
+        post.category !== category &&
+        !(post.secondaryCategories || []).includes(category)
+      ) {
+        return false
+      }
+      if (term) {
+        const hay = `${post.title} ${post.problem} ${post.author} ${post.tags?.join(' ') || ''}`.toLowerCase()
+        if (!hay.includes(term)) return false
+      }
+      return true
+    })
+
+    return [...filtered].sort((a, b) => {
+      if (sort === 'popular') return b.voteCount - a.voteCount
+      if (sort === 'discussed') return b.commentCount - a.commentCount
+      return new Date(b.createdAt) - new Date(a.createdAt)
+    })
+  }, [allPosts, hiddenIds, type, category, query, sort])
 
   return (
     <div className="discoveries">
       <header className="discoveries-head">
         <h1 className="discoveries-title">Discoveries</h1>
         <p className="discoveries-sub">
-          Search and filter the mathematical collection independently of your feed.
+          Pick a type on the left, then a category, to reveal every question filed under
+          that combination.
         </p>
       </header>
 
-      <form className="discoveries-search" role="search" onSubmit={handleSearch}>
-        <FiSearch className="discoveries-search-icon" size={18} />
-        <input
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search problems, ideas and topics…"
-          aria-label="Search discoveries"
-        />
-      </form>
-
-      <section className="discoveries-subjects" aria-label="Popular subjects">
-        <span className="discoveries-field-label">Popular subjects</span>
-        <div className="discoveries-chips">
-          <button
-            type="button"
-            className={`discoveries-chip ${category === '' ? 'active' : ''}`}
-            onClick={() => setParam('category', '')}
-          >
-            All subjects
-          </button>
-          {subjects.map((subject) => (
-            <button
-              key={subject}
-              type="button"
-              className={`discoveries-chip ${category === subject ? 'active' : ''}`}
-              onClick={() => setParam('category', category === subject ? '' : subject)}
-            >
-              {formatCategoryLabel(subject)}
-            </button>
-          ))}
-        </div>
-      </section>
-
-      <div className="discoveries-controls">
-        <label className="discoveries-field">
-          <span className="discoveries-field-label">Post type</span>
-          <select
-            value={type}
-            onChange={(e) => setParam('type', e.target.value)}
-            className="discoveries-select"
-          >
-            <option value="">All types</option>
-            {types.map((t) => (
-              <option key={t} value={t}>
-                {formatTypeLabel(t)}
-              </option>
+      <div className="discoveries-layout">
+        <aside className="discoveries-sidebar" aria-label="Problem types">
+          <ul className="type-menu">
+            {MENU_TYPES.map((item) => (
+              <li key={item}>
+                <button
+                  type="button"
+                  className={`type-menu-item ${type === item ? 'active' : ''}`}
+                  onClick={() => selectType(item)}
+                >
+                  <span className="type-menu-name">{formatTypeLabel(item)}</span>
+                  <span className="type-menu-count">{typeCounts[item] || 0}</span>
+                </button>
+              </li>
             ))}
-          </select>
-        </label>
+          </ul>
+        </aside>
 
-        <div className="discoveries-field">
-          <span className="discoveries-field-label">Difficulty</span>
-          <div className="discoveries-chips">
-            <button
-              type="button"
-              className={`discoveries-chip ${difficulty === '' ? 'active' : ''}`}
-              onClick={() => setParam('difficulty', '')}
-            >
-              All
-            </button>
-            {DIFFICULTIES.map((d) => (
-              <button
-                key={d}
-                type="button"
-                className={`discoveries-chip ${difficulty === d ? 'active' : ''}`}
-                onClick={() => setParam('difficulty', difficulty === d ? '' : d)}
-              >
-                {d.charAt(0).toUpperCase() + d.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
+        <section className="discoveries-main">
+          <nav className="breadcrumbs" aria-label="Breadcrumb">
+            <ol>
+              <li>
+                <Link to="/discoveries">Discoveries</Link>
+              </li>
+              {type && (
+                <li>
+                  {category ? (
+                    <button type="button" onClick={backToCategories}>
+                      {formatTypeLabel(type)}
+                    </button>
+                  ) : (
+                    <span className="current">{formatTypeLabel(type)}</span>
+                  )}
+                </li>
+              )}
+              {category && (
+                <li>
+                  <span className="current">{formatCategoryLabel(category)}</span>
+                </li>
+              )}
+            </ol>
+          </nav>
 
-        <label className="discoveries-field">
-          <span className="discoveries-field-label">Sort by</span>
-          <select
-            value={sort}
-            onChange={(e) => setParam('sort', e.target.value)}
-            className="discoveries-select"
+          <form
+            className="discoveries-search"
+            role="search"
+            onSubmit={(e) => e.preventDefault()}
           >
-            {SORTS.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            <FiSearch className="discoveries-search-icon" size={18} />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search problems, ideas and topics…"
+              aria-label="Search discoveries"
+            />
+          </form>
+
+          {!type && (
+            <div className="discoveries-placeholder">
+              <FiChevronLeft size={18} />
+              <p>Select a type from the menu to begin browsing its categories.</p>
+            </div>
+          )}
+
+          {type && !category && (
+            <div className="category-view">
+              <div className="questions-head">
+                <h2 className="questions-title">{formatTypeLabel(type)}</h2>
+                <span className="questions-count">
+                  {typeCounts[type] || 0} questions
+                </span>
+              </div>
+              <div className="category-grid">
+                {categories.map((cat) => {
+                  const count = categoryCounts[cat] || 0
+                  return (
+                    <button
+                      key={cat}
+                      type="button"
+                      className={`category-tile ${count === 0 ? 'empty' : ''}`}
+                      onClick={() => selectCategory(cat)}
+                    >
+                      <span className="category-tile-info">
+                        <span className="category-tile-name">
+                          {formatCategoryLabel(cat)}
+                        </span>
+                        <span className="category-tile-count">
+                          {count} {count === 1 ? 'question' : 'questions'}
+                        </span>
+                      </span>
+                      <FiChevronRight className="category-tile-icon" size={18} />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
+          {category && (
+            <div className="questions-view">
+              <div className="questions-head">
+                <h2 className="questions-title">{formatCategoryLabel(category)}</h2>
+                <label className="questions-sort">
+                  Sort
+                  <select
+                    value={sort}
+                    onChange={(e) => {
+                      const p = new URLSearchParams(params)
+                      p.set('sort', e.target.value)
+                      setParams(p, { replace: true })
+                    }}
+                    className="discoveries-select"
+                  >
+                    {SORTS.map((s) => (
+                      <option key={s.value} value={s.value}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="questions-count-line">
+                {questions.length} {questions.length === 1 ? 'question' : 'questions'}
+                {type
+                  ? ` in ${formatTypeLabel(type)} · ${formatCategoryLabel(category)}`
+                  : ` in ${formatCategoryLabel(category)}`}
+              </div>
+
+              {questions.length === 0 ? (
+                <div className="discoveries-empty">
+                  <h2>Nothing here yet</h2>
+                  <p>
+                    No {type ? `${formatTypeLabel(type)} ` : ''}questions are filed under{' '}
+                    {formatCategoryLabel(category)}.
+                  </p>
+                  <Link to="/create" className="type-panel-empty-cta">
+                    <FiPlus size={15} /> Add the first question
+                  </Link>
+                </div>
+              ) : (
+                <div className="discoveries-grid">
+                  {questions.map((post) => (
+                    <PostCard key={post.id} post={post} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
       </div>
-
-      <div className="discoveries-count">
-        {posts.length} {posts.length === 1 ? 'problem' : 'problems'}
-      </div>
-
-      {posts.length === 0 ? (
-        <div className="discoveries-empty">
-          <h2>Nothing matches yet</h2>
-          <p>Try clearing some filters or switching your search terms.</p>
-        </div>
-      ) : (
-        <div className="discoveries-grid">
-          {posts.map((post) => (
-            <PostCard key={post.id} post={post} />
-          ))}
-        </div>
-      )}
 
       <section className="extras-section" aria-label="Math fun facts">
         <header className="extras-head">

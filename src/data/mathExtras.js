@@ -28,6 +28,91 @@ export const funFacts = [
     id: 'fact-pizza',
     title: 'Pizza volume is π z z a',
     text: 'A pizza of radius z and thickness a has volume π × z × z × a. Mathematicians eat well.'
+  },
+  {
+    id: 'fact-1089',
+    title: 'The 1089 magic trick',
+    text: 'Pick any 3-digit number with a smaller reverse, subtract, then add the reverse of the result. You always land on 1089.'
+  },
+  {
+    id: 'fact-prime-reciprocal',
+    title: 'Full reptend primes loop forever',
+    text: '1/7 = 0.142857 142857 … — the repeating block of 6 digits is the largest possible length for a prime denominator of 7.'
+  },
+  {
+    id: 'fact-37',
+    title: '37 is a multiplying machine',
+    text: '37 × 3 = 111, 37 × 6 = 222, 37 × 9 = 333 … all the way to 37 × 27 = 999. One number, nine repeats.'
+  },
+  {
+    id: 'fact-golden',
+    title: 'The golden ratio hides in your hand',
+    text: 'The ratio of a human finger segment to the next is roughly 1.618, the golden ratio φ — and it satisfies φ = 1 + 1/φ.'
+  },
+  {
+    id: 'fact-moser',
+    title: 'A circle can contain at most 7 regions from 3 lines',
+    text: 'Three straight lines cut a circle into at most 7 pieces. Add a fourth and the count jumps, following 1, 2, 4, 7, 11, 16 …'
+  },
+  {
+    id: 'fact-birthday-paradox',
+    title: 'A shared birthday needs only 23 people',
+    text: 'With 23 people the odds of two sharing a birthday pass 50%; with 70 people it is over 99.9%. Your intuition underestimates pairs.'
+  },
+  {
+    id: 'fact-e',
+    title: 'e is the smooth-interest limit',
+    text: 'Compound 100% interest infinitely often and $1 grows to exactly e ≈ 2.71828. More compounding can never break that ceiling.'
+  },
+  {
+    id: 'fact-cantor-pairing',
+    title: 'There are as many fractions as whole numbers',
+    text: 'Walk the grid of fractions diagonally and every fraction gets a turn — so the rationals are countable, just like the naturals.'
+  },
+  {
+    id: 'fact-multiply-9',
+    title: 'The 9s always confess',
+    text: 'If a number is divisible by 9, so is the sum of its digits: 4,527 → 4+5+2+7 = 18 → 1+8 = 9. Cast out nines to check arithmetic.'
+  },
+  {
+    id: 'fact-mobius',
+    title: 'A one-sided strip with no inside',
+    text: 'A Möbius strip has just one surface and one edge. Cut it down the middle and you get one longer loop, not two.'
+  },
+  {
+    id: 'fact-koch',
+    title: 'A curve of infinite length around finite area',
+    text: 'The Koch snowflake adds ever-smaller bumps: its perimeter grows without bound while its area converges to 8/5 of the original triangle.'
+  },
+  {
+    id: 'fact-collatz',
+    title: 'The 3n + 1 loop nobody can break',
+    text: 'Halve even numbers, triple-plus-one odd numbers, and every start tested so far falls to 1. No one knows why — or if it always will.'
+  },
+  {
+    id: 'fact-euler-bridge',
+    title: 'Seven bridges launched a whole field',
+    text: 'Euler\u2019s 1736 proof that Königsberg\u2019s bridges cannot all be crossed once founded graph theory — by proving a walk simply does not exist.'
+  },
+  {
+    id: 'fact-napier',
+    title: 'Logarithms turned multiplication into addition',
+    text: 'Before calculators, log tables let you multiply by adding exponents: log(ab) = log a + log b. Slower to state, faster to compute.'
+  },
+  {
+    id: 'fact-fibonacci-climb',
+    title: 'Every positive integer is a sum of Fibonacci numbers',
+    text: 'Zeckendorf\u2019s theorem: write any number as a sum of non-consecutive Fibonacci numbers, and the representation is unique.'
+  },
+  {
+    id: 'fact-ramsey',
+    title: 'Order is unavoidable in large crowds',
+    text: 'In any group of 6 people, some 3 all know each other or some 3 are all strangers. Chaos always produces a pattern.'
+  },
+  {
+    id: 'fact-infinite-monkeys',
+    title: 'Infinite monkeys eventually type Shakespeare',
+    text: 'Given endless time, a random typist will produce every finite string — including this very sentence — with probability 1.'
   }
 ]
 

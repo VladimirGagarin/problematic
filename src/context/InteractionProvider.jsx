@@ -177,7 +177,10 @@ function InteractionProvider({ children }) {
 
   const allPosts = useMemo(() => [...dynamicPosts, ...samplePosts], [dynamicPosts])
 
-  const getPostOf = useCallback((key) => allPosts.find((post) => post.id === key), [allPosts])
+  const getPostOf = useCallback(
+    (key) => allPosts.find((post) => post.id === key),
+    [allPosts]
+  )
 
   const value = useMemo(
     () => ({

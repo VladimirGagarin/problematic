@@ -23,7 +23,8 @@ export const types = [
   'proof-verification',
   'mathematical-model',
   'algorithm-problem',
-  'riddle'
+  'riddle',
+  'investigation'
 ]
 
 export function formatTypeLabel(slug) {
