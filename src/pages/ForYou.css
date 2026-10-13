@@ -55,6 +55,17 @@
   gap: 0.5rem;
 }
 
+.foryou-shortcuts .topic-chip {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.foryou-shortcuts .topic-chip.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
 .foryou-stream {
   display: flex;
   flex-direction: column;

@@ -7,14 +7,17 @@ import {
   FiAlertTriangle,
   FiFlag,
   FiEyeOff,
-  FiCheck
+  FiCheck,
+  FiPlay
 } from 'react-icons/fi'
 import CommentPanel from './CommentPanel'
 import DiscussionActions from './DiscussionActions'
+import TryOut from './TryOut'
 import { formatTypeLabel } from '../data/types'
 import { formatCategoryLabel } from '../data/categories'
 import { getComments } from '../data/samplePosts'
 import { formatTimeAgo } from '../utils/time'
+import { isTryOutPossible } from '../utils/formulaEngine'
 import { useInteractions } from '../context/interactions'
 import './PostCard.css'
 
@@ -26,11 +29,13 @@ function PostCard({ post, detail = false }) {
   const [showComments, setShowComments] = useState(false)
   const [openMenu, setOpenMenu] = useState(false)
   const [reported, setReported] = useState(false)
+  const [showTryOut, setShowTryOut] = useState(false)
   const menuRef = useRef(null)
   const closeComments = useCallback(() => setShowComments(false), [])
   const { hidePost } = useInteractions()
 
   const isUnsolved = post.solutionStatus === 'unsolved'
+  const tryOutPossible = isTryOutPossible(post)
   const handle = `@${(post.author || 'user').toLowerCase().replace(/[^a-z0-9]+/g, '')}`
 
   const cta = post.type?.includes('proof')
@@ -139,6 +144,11 @@ function PostCard({ post, detail = false }) {
               <FiAlertTriangle size={12} /> Unsolved
             </span>
           )}
+          {tryOutPossible && (
+            <span className="x-tag x-tag-tryout">
+              <FiPlay size={12} /> Try out
+            </span>
+          )}
         </div>
 
         <h2 className="x-title">{post.title}</h2>
@@ -158,6 +168,17 @@ function PostCard({ post, detail = false }) {
             <FiZap size={15} />
             {post.hints?.length || 0} hint{post.hints?.length !== 1 ? 's' : ''}
           </button>
+          {tryOutPossible && (
+            <button
+              type="button"
+              className="x-chip x-chip-tryout"
+              onClick={() => setShowTryOut(true)}
+              title="Generate a random instance of this pattern and check your answer"
+            >
+              <FiPlay size={15} />
+              Try out
+            </button>
+          )}
           {REVEAL_ENABLED && !isUnsolved && (
             <button
               type="button"
@@ -216,6 +237,8 @@ function PostCard({ post, detail = false }) {
         )}
 
         <CommentPanel post={post} open={showComments} onClose={closeComments} />
+
+        {showTryOut && <TryOut post={post} onClose={() => setShowTryOut(false)} />}
       </div>
     </article>
   )

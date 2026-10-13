@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { FiX, FiSend, FiUser, FiHeart, FiCornerUpLeft, FiBell } from 'react-icons/fi'
 import { getComments } from '../data/samplePosts'
+import { fetchComments, addComment, isRemote } from '../lib/api'
 import { formatTimeAgo } from '../utils/time'
 import { useAuth } from '../context/auth'
 import { useInteractions } from '../context/interactions'
@@ -21,6 +22,19 @@ function CommentPanel({ post, open, onClose }) {
   useEffect(() => {
     if (replyTo) inputRef.current?.focus()
   }, [replyTo])
+
+  useEffect(() => {
+    if (!isRemote) return
+    let active = true
+    fetchComments(post.id)
+      .then((list) => {
+        if (active) setComments(list)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [post.id])
 
   if (!open) return null
 
@@ -50,17 +64,18 @@ function CommentPanel({ post, open, onClose }) {
     const text = draft.trim()
     if (!text) return
     const parentId = replyTo?.id
-    setComments((prev) => [
-      {
-        id: `local-${Date.now()}`,
-        author: 'You',
-        text,
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        parentId
-      },
-      ...prev
-    ])
+    const created = {
+      id: `local-${Date.now()}`,
+      author: 'You',
+      text,
+      createdAt: new Date().toISOString(),
+      likes: 0,
+      parentId
+    }
+    setComments((prev) => [created, ...prev])
+    if (isRemote) {
+      addComment(post.id, { text, parentId }).catch(() => {})
+    }
     if (subscribed) {
       addNotification({
         type: parentId ? 'new_reply' : 'new_comment',

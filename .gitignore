@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 
+# Local Supabase credentials (copy .env.example to .env and fill in)
+.env
+.env.*
+!.env.example
+
+# Regenerated from scripts/seed-posts.mjs
+supabase/seed-posts.sql
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

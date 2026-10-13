@@ -353,6 +353,19 @@
   color: #f43f5e;
 }
 
+.x-tag-tryout {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.x-chip-tryout {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 .discussion-actions {
   display: flex;
   flex-wrap: wrap;

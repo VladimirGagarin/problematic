@@ -5,6 +5,7 @@ import { useAuth } from '../context/auth'
 import { useInteractions } from '../context/interactions'
 import { types, formatTypeLabel } from '../data/types'
 import { categories, formatCategoryLabel } from '../data/categories'
+import { createPost, isRemote } from '../lib/api'
 import './CreatePage.css'
 
 const DIFFICULTIES = ['easy', 'medium', 'hard']
@@ -12,7 +13,7 @@ const DIFFICULTIES = ['easy', 'medium', 'hard']
 function CreatePage() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
-  const { isAuthenticated, isPremium, openPrompt } = useAuth()
+  const { isAuthenticated, isPremium, openPrompt, user } = useAuth()
   const { drafts, createDraft, updateDraft, publishDraft } = useInteractions()
 
   const draftId = params.get('draft')
@@ -80,14 +81,24 @@ function CreatePage() {
   const handlePublish = () => {
     if (!valid) return
     const fields = buildFields()
+    let postId
     if (existing) {
       updateDraft(existing.id, fields)
-      const postId = publishDraft(existing.id)
-      navigate(`/post/${postId}`)
+      postId = publishDraft(existing.id)
     } else {
-      const postId = publishDraft({ id: `draft-${Date.now()}`, ...fields })
-      navigate(`/post/${postId}`)
+      postId = publishDraft({ id: `draft-${Date.now()}`, ...fields })
     }
+    if (isRemote) {
+      createPost({
+        id: postId,
+        ...fields,
+        answer: '',
+        formula: '',
+        author: user?.name || 'You',
+        createdAt: new Date().toISOString()
+      }).catch(() => {})
+    }
+    navigate(`/post/${postId}`)
   }
 
   return (

@@ -4,6 +4,7 @@ import PostCard, { PostCardSkeleton } from '../components/PostCard'
 import TopicChip from '../components/TopicChip'
 import { shuffleArray } from '../utils/shuffle'
 import { formatCompactNumber } from '../utils/time'
+import { isTryOutPossible } from '../utils/formulaEngine'
 import { useAuth } from '../context/auth'
 import { useInteractions } from '../context/interactions'
 import './ForYou.css'
@@ -12,23 +13,9 @@ const PAGE_SIZE = 3
 const GHOST_COUNT = 2
 const LOAD_DELAY = 650
 
-const HERO_SHORTCUTS = [
-  { label: 'Number Theory', category: 'number-theory' },
-  { label: 'Algebra', category: 'algebra' },
-  { label: 'Geometry', category: 'geometry' },
-  { label: 'Combinatorics', category: 'combinatorics' },
-  { label: 'Topology', category: 'topology' },
-  { label: 'Analysis', category: 'analysis' },
-  { label: 'Calculus', category: 'calculus' },
-  { label: 'Linear Algebra', category: 'linear-algebra' },
-  { label: 'Graph Theory', category: 'graph-theory' },
-  { label: 'Probability', category: 'probability' },
-  { label: 'Game Theory', category: 'game-theory' },
-  { label: 'Logic', category: 'logic' },
-  { label: 'Optimization', category: 'optimization' },
-  { label: 'Cryptography', category: 'cryptography' },
-  { label: 'Dynamical Systems', category: 'dynamical-systems' },
-  { label: 'Set Theory', category: 'set-theory' }
+const TRYOUT_FILTERS = [
+  { value: 'no', label: 'Non Try-out' },
+  { value: 'yes', label: 'Questions with Try-outs' }
 ]
 
 const POPULAR_SUBJECTS = [
@@ -46,7 +33,7 @@ function ForYou() {
   const [visible, setVisible] = useState(PAGE_SIZE)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [shortcuts] = useState(() => shuffleArray(HERO_SHORTCUTS))
+  const [tryOutFilter, setTryOutFilter] = useState(null)
   const [subjects] = useState(() => shuffleArray(POPULAR_SUBJECTS))
   const { openPrompt } = useAuth()
   const { allPosts, hiddenIds } = useInteractions()
@@ -54,8 +41,13 @@ function ForYou() {
   const pendingRef = useRef(false)
 
   const pool = useMemo(
-    () => allPosts.filter((p) => !hiddenIds.has(p.id)),
-    [allPosts, hiddenIds]
+    () =>
+      allPosts.filter((p) => {
+        if (hiddenIds.has(p.id)) return false
+        if (tryOutFilter) return isTryOutPossible(p) === (tryOutFilter === 'yes')
+        return true
+      }),
+    [allPosts, hiddenIds, tryOutFilter]
   )
 
   const poolLengthRef = useRef(pool.length)
@@ -118,8 +110,16 @@ function ForYou() {
             Explore problems, challenge ideas, and discover how others think.
           </p>
           <div className="foryou-shortcuts">
-            {shortcuts.slice(0, 4).map((s) => (
-              <TopicChip key={s.category} to={`/discoveries?category=${s.category}`} label={s.label} />
+            {TRYOUT_FILTERS.map((f) => (
+              <button
+                key={f.value}
+                type="button"
+                className={`topic-chip ${tryOutFilter === f.value ? 'active' : ''}`}
+                aria-pressed={tryOutFilter === f.value}
+                onClick={() => setTryOutFilter((v) => (v === f.value ? null : f.value))}
+              >
+                {f.label}
+              </button>
             ))}
           </div>
         </section>

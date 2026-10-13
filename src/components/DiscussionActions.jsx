@@ -11,6 +11,7 @@ import {
 } from 'react-icons/fi'
 import { useAuth } from '../context/auth'
 import { useInteractions } from '../context/interactions'
+import { toggleVote, recordShare, isRemote } from '../lib/api'
 import { formatCompactNumber } from '../utils/time'
 
 function DiscussionActions({ post, onOpenComments }) {
@@ -33,12 +34,23 @@ function DiscussionActions({ post, onOpenComments }) {
     toggleSaved(post.id)
   }
 
+  const handleLike = () => {
+    const next = !liked
+    setLiked(next)
+    if (isRemote && requireAuth()) {
+      toggleVote(post.id, next ? 1 : -1).catch(() => {})
+    }
+  }
+
   const handleShare = async () => {
     const url = `${window.location.origin}/post/${post.id}`
     try {
       await navigator.clipboard.writeText(url)
     } catch {
       // clipboard may be blocked; still show the copied confirmation
+    }
+    if (isRemote && requireAuth()) {
+      recordShare(post.id).catch(() => {})
     }
     setCopied(true)
     setTimeout(() => setCopied(false), 1600)
@@ -62,7 +74,7 @@ function DiscussionActions({ post, onOpenComments }) {
         <button
           type="button"
           className={`da-action da-like ${liked ? 'active' : ''}`}
-          onClick={() => setLiked((v) => !v)}
+          onClick={handleLike}
           title="Upvote"
           aria-label="Upvote"
           aria-pressed={liked}
