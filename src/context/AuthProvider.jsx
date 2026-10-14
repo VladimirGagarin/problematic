@@ -1,55 +1,114 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AuthContext } from './auth'
 import AuthPrompt from '../components/AuthPrompt'
-import { checkUserEligibility } from '../lib/api'
+import SignInModal from '../components/SignInModal'
+import WelcomeModal from '../components/WelcomeModal'
+import { checkUserEligibility, isRemote } from '../lib/api'
+import { fetchSessionProfile, signOutRemote, startOAuth } from '../lib/authClient'
 import {
-  CURRENT_USER_ID,
-  CURRENT_USER_NAME,
-  CURRENT_USER_HANDLE
-} from '../data/users'
+  findOrCreateUser,
+  getCurrentUser,
+  getWelcomeSeen,
+  setWelcomeSeen,
+  signOutUser
+} from '../lib/userStore'
 
 function AuthProvider({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(true)
-  const [isPremium, setIsPremium] = useState(false)
-  const [eligible, setEligible] = useState(false)
+  const [user, setUser] = useState(() => getCurrentUser())
+  const [isPremium, setIsPremium] = useState(() => Boolean(getCurrentUser()?.isPremium))
+  const [eligible, setEligible] = useState(() => Boolean(getCurrentUser()))
   const [prompt, setPrompt] = useState(null)
+  const [signInOpen, setSignInOpen] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(
+    () => !getCurrentUser() && !getWelcomeSeen()
+  )
+
+  const isAuthenticated = Boolean(user)
+  const isGuest = !isAuthenticated
 
   useEffect(() => {
-    if (!isAuthenticated) return
+    if (!isAuthenticated || !isRemote) return
     let active = true
-    checkUserEligibility(CURRENT_USER_ID)
+    checkUserEligibility(user.id)
       .then((ok) => {
         if (!active) return
         if (!ok) {
-          setIsAuthenticated(false)
           setIsPremium(false)
+          setEligible(false)
           setPrompt('ineligible')
+          signOutUser()
+          setUser(null)
         } else {
           setEligible(true)
         }
       })
       .catch(() => {
-        if (active) setEligible(false)
+        if (active) setEligible(true)
       })
     return () => {
       active = false
     }
-  }, [isAuthenticated])
+  }, [isAuthenticated, user])
 
-  const openPrompt = useCallback((type) => setPrompt(type), [])
+  const openSignIn = useCallback(() => {
+    setShowWelcome(false)
+    setSignInOpen(true)
+  }, [])
+
+  const closeSignIn = useCallback(() => setSignInOpen(false), [])
+  const openPrompt = useCallback((type) => {
+    if (type === 'signin') {
+      setShowWelcome(false)
+      setSignInOpen(true)
+      return
+    }
+    setPrompt(type)
+  }, [])
   const closePrompt = useCallback(() => setPrompt(null), [])
+
+  const signInWithProvider = useCallback((provider) => startOAuth(provider), [])
+
+  const signInAs = useCallback((profile) => {
+    const { user: nextUser } = findOrCreateUser(profile)
+    setUser(nextUser)
+    setIsPremium(Boolean(nextUser.isPremium))
+    setEligible(true)
+    setWelcomeSeen(true)
+    setShowWelcome(false)
+    setSignInOpen(false)
+    return nextUser
+  }, [])
+
+  // After a real Supabase OAuth redirect, map the returned session to our store.
+  useEffect(() => {
+    if (!isRemote) return
+    let active = true
+    fetchSessionProfile()
+      .then((profile) => {
+        if (active && profile) signInAs(profile)
+      })
+      .catch(() => {})
+    return () => {
+      active = false
+    }
+  }, [signInAs])
+
+  const continueAsGuest = useCallback(() => {
+    setWelcomeSeen(true)
+    setShowWelcome(false)
+  }, [])
 
   const requireAuth = useCallback(() => {
     if (!isAuthenticated) {
-      setPrompt('signin')
+      openSignIn()
       return false
     }
     return true
-  }, [isAuthenticated])
+  }, [isAuthenticated, openSignIn])
 
   const requireEligible = useCallback(() => {
     if (!isAuthenticated) {
-      setPrompt('signin')
+      openSignIn()
       return false
     }
     if (!eligible) {
@@ -57,11 +116,11 @@ function AuthProvider({ children }) {
       return false
     }
     return true
-  }, [isAuthenticated, eligible])
+  }, [isAuthenticated, eligible, openSignIn])
 
   const requirePremium = useCallback(() => {
     if (!isAuthenticated) {
-      setPrompt('signin')
+      openSignIn()
       return false
     }
     if (!eligible) {
@@ -73,33 +132,30 @@ function AuthProvider({ children }) {
       return false
     }
     return true
-  }, [isAuthenticated, eligible, isPremium])
+  }, [isAuthenticated, eligible, isPremium, openSignIn])
 
   const value = useMemo(
     () => ({
-      user: isAuthenticated
-        ? {
-            id: CURRENT_USER_ID,
-            name: CURRENT_USER_NAME,
-            handle: CURRENT_USER_HANDLE,
-            eligible
-          }
-        : null,
+      user,
       isAuthenticated,
+      isGuest,
       isPremium,
       eligible,
       openPrompt,
       closePrompt,
+      openSignIn,
+      closeSignIn,
+      continueAsGuest,
+      signInWithProvider,
+      signInAs,
       requireAuth,
       requireEligible,
       requirePremium,
-      signIn: () => {
-        setEligible(false)
-        setIsAuthenticated(true)
-        setPrompt(null)
-      },
+      signIn: openSignIn,
       signOut: () => {
-        setIsAuthenticated(false)
+        signOutUser()
+        signOutRemote()
+        setUser(null)
         setIsPremium(false)
         setEligible(false)
       },
@@ -109,11 +165,18 @@ function AuthProvider({ children }) {
       }
     }),
     [
+      user,
       isAuthenticated,
+      isGuest,
       isPremium,
       eligible,
       openPrompt,
       closePrompt,
+      openSignIn,
+      closeSignIn,
+      continueAsGuest,
+      signInWithProvider,
+      signInAs,
       requireAuth,
       requireEligible,
       requirePremium
@@ -124,6 +187,12 @@ function AuthProvider({ children }) {
     <AuthContext.Provider value={value}>
       {children}
       <AuthPrompt type={prompt} onClose={closePrompt} />
+      <SignInModal open={signInOpen} onClose={closeSignIn} />
+      <WelcomeModal
+        open={showWelcome}
+        onSignIn={openSignIn}
+        onContinueAsGuest={continueAsGuest}
+      />
     </AuthContext.Provider>
   )
 }

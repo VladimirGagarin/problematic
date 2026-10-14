@@ -18,16 +18,18 @@ function DiscussionActions({ post, onOpenComments }) {
   const navigate = useNavigate()
   const { requireAuth } = useAuth()
   const {
+    likedIds,
     savedIds,
     followingIds,
+    toggleLike,
     toggleSaved,
     toggleFollowing,
     createShareLink,
     getShareCount
   } = useInteractions()
-  const [liked, setLiked] = useState(false)
   const [copied, setCopied] = useState(false)
 
+  const liked = likedIds.has(post.id)
   const isSaved = savedIds.has(post.id)
   const isFollowing = followingIds.has(post.id)
 
@@ -42,9 +44,10 @@ function DiscussionActions({ post, onOpenComments }) {
   }
 
   const handleLike = () => {
+    if (!requireAuth()) return
     const next = !liked
-    setLiked(next)
-    if (isRemote && requireAuth()) {
+    toggleLike(post.id)
+    if (isRemote) {
       toggleVote(post.id, next ? 1 : -1).catch(() => {})
     }
   }

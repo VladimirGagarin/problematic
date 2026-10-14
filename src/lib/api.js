@@ -3,6 +3,24 @@ import { samplePosts, getComments } from '../data/samplePosts'
 
 export { isRemote }
 
+const COMMENTS_KEY = 'problematic:comments'
+
+function readLocalComments() {
+  try {
+    return JSON.parse(localStorage.getItem(COMMENTS_KEY)) || {}
+  } catch {
+    return {}
+  }
+}
+
+function writeLocalComments(map) {
+  try {
+    localStorage.setItem(COMMENTS_KEY, JSON.stringify(map))
+  } catch {
+    // storage unavailable; the comment still shows for this session
+  }
+}
+
 const toPost = (row) => ({
   id: row.id,
   title: row.title,
@@ -25,6 +43,7 @@ const toComment = (row) => ({
   id: row.id,
   postId: row.post_id,
   parentId: row.parent_id,
+  authorId: row.author_id || null,
   author: row.author || 'Member',
   text: row.text,
   createdAt: row.created_at,
@@ -147,7 +166,12 @@ export async function recordProfileView(ownerId, viewerId) {
 }
 
 export async function fetchComments(postId) {
-  if (!supabase) return getComments(postId)
+  if (!supabase) {
+    const stored = readLocalComments()[postId] || []
+    return [...stored, ...getComments(postId)].sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    )
+  }
   const { data, error } = await supabase
     .from('comments')
     .select('*')
@@ -157,17 +181,22 @@ export async function fetchComments(postId) {
   return (data || []).map(toComment)
 }
 
-export async function addComment(postId, { text, parentId = null }) {
+export async function addComment(postId, { text, parentId = null, author, authorId = null }) {
   if (!supabase) {
-    return {
+    const comment = {
       id: `local-${Date.now()}`,
       postId,
       parentId,
-      author: 'You',
+      authorId,
+      author: author || 'You',
       text,
       createdAt: new Date().toISOString(),
       likes: 0
     }
+    const map = readLocalComments()
+    map[postId] = [comment, ...(map[postId] || [])]
+    writeLocalComments(map)
+    return comment
   }
   const { data, error } = await supabase.rpc('add_comment', {
     p_post_id: postId,
@@ -179,7 +208,16 @@ export async function addComment(postId, { text, parentId = null }) {
 }
 
 export async function editComment(commentId, text) {
-  if (!supabase) return { id: commentId, text }
+  if (!supabase) {
+    const map = readLocalComments()
+    for (const postId of Object.keys(map)) {
+      map[postId] = map[postId].map((c) =>
+        c.id === commentId ? { ...c, text, edited: true } : c
+      )
+    }
+    writeLocalComments(map)
+    return { id: commentId, text }
+  }
   const { data, error } = await supabase
     .from('comments')
     .update({ text })
@@ -191,7 +229,25 @@ export async function editComment(commentId, text) {
 }
 
 export async function deleteComment(commentId) {
-  if (!supabase) return
+  if (!supabase) {
+    const map = readLocalComments()
+    for (const postId of Object.keys(map)) {
+      const toRemove = new Set([commentId])
+      let grew = true
+      while (grew) {
+        grew = false
+        for (const c of map[postId]) {
+          if (c.parentId && toRemove.has(c.parentId) && !toRemove.has(c.id)) {
+            toRemove.add(c.id)
+            grew = true
+          }
+        }
+      }
+      map[postId] = map[postId].filter((c) => !toRemove.has(c.id))
+    }
+    writeLocalComments(map)
+    return
+  }
   const { error } = await supabase.from('comments').delete().eq('id', commentId)
   if (error) throw error
 }

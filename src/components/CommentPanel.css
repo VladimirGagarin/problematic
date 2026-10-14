@@ -204,6 +204,47 @@
   text-align: center;
 }
 
+.comment-guest-cta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 2rem 1.5rem 2.25rem;
+}
+
+.comment-guest-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(126, 231, 135, 0.12);
+  border: 1px solid rgba(126, 231, 135, 0.3);
+  color: var(--term-user);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.comment-guest-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--term-text);
+}
+
+.comment-guest-body {
+  margin: 0 0 0.75rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--term-muted);
+  max-width: 34ch;
+}
+
+.comment-guest-cta .btn {
+  font-family: var(--sans, inherit);
+}
+
 .comment-panel-more {
   align-self: flex-start;
   background: none;

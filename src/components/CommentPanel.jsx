@@ -12,7 +12,7 @@ import {
   FiCheck
 } from 'react-icons/fi'
 import { getComments } from '../data/samplePosts'
-import { fetchComments, addComment, editComment, deleteComment, isRemote } from '../lib/api'
+import { fetchComments, addComment, editComment, deleteComment } from '../lib/api'
 import { CURRENT_USER_NAME } from '../data/users'
 import { formatTimeAgo } from '../utils/time'
 import { useAuth } from '../context/auth'
@@ -22,7 +22,7 @@ import EmojiPicker from './EmojiPicker'
 import './CommentPanel.css'
 
 function CommentPanel({ post, open, onClose }) {
-  const { requireAuth } = useAuth()
+  const { requireAuth, isGuest, openSignIn, user } = useAuth()
   const { replyNotifyIds, toggleReplyNotify, addNotification } = useInteractions()
   const subscribed = replyNotifyIds.has(post.id)
   const [comments, setComments] = useState(() => getComments(post.id))
@@ -43,7 +43,6 @@ function CommentPanel({ post, open, onClose }) {
   }, [replyTo])
 
   useEffect(() => {
-    if (!isRemote) return
     let active = true
     fetchComments(post.id)
       .then((list) => {
@@ -57,8 +56,51 @@ function CommentPanel({ post, open, onClose }) {
 
   if (!open) return null
 
+  if (isGuest) {
+    return (
+      <section
+        className="comment-panel comment-panel-guest"
+        aria-label={`Discussion on ${post.title}`}
+      >
+        <header className="comment-panel-header">
+          <span className="comment-term-dots" aria-hidden="true">
+            <i />
+            <i />
+            <i />
+          </span>
+          <h2 className="comment-panel-title">discussion</h2>
+          <div className="comment-panel-header-right">
+            <button
+              type="button"
+              className="comment-panel-close"
+              onClick={onClose}
+              aria-label="Close discussion"
+              title="Close"
+            >
+              <FiX size={18} />
+            </button>
+          </div>
+        </header>
+        <div className="comment-guest-cta">
+          <span className="comment-guest-icon" aria-hidden="true">
+            <FiSmile size={22} />
+          </span>
+          <p className="comment-guest-title">Join the discussion</p>
+          <p className="comment-guest-body">
+            Sign in to read comments, reply and share your solution.
+          </p>
+          <button type="button" className="btn btn-accent" onClick={openSignIn}>
+            Sign in
+          </button>
+        </div>
+      </section>
+    )
+  }
+
   const isOwner = (comment) =>
-    comment.author === 'You' || comment.author === CURRENT_USER_NAME
+    comment.authorId && user?.id
+      ? comment.authorId === user.id
+      : comment.author === 'You' || comment.author === CURRENT_USER_NAME
 
   const effectiveLikes = (comment) => comment.likes + (likedIds.has(comment.id) ? 1 : 0)
 
@@ -88,16 +130,20 @@ function CommentPanel({ post, open, onClose }) {
     const parentId = replyTo?.id
     const created = {
       id: `local-${Date.now()}`,
-      author: 'You',
+      authorId: user?.id || null,
+      author: user?.name || 'You',
       text,
       createdAt: new Date().toISOString(),
       likes: 0,
       parentId
     }
     setComments((prev) => [created, ...prev])
-    if (isRemote) {
-      addComment(post.id, { text, parentId }).catch(() => {})
-    }
+    addComment(post.id, {
+      text,
+      parentId,
+      author: user?.name,
+      authorId: user?.id || null
+    }).catch(() => {})
     if (subscribed) {
       addNotification({
         type: parentId ? 'new_reply' : 'new_comment',
@@ -167,9 +213,7 @@ function CommentPanel({ post, open, onClose }) {
     setComments((prev) =>
       prev.map((c) => (c.id === comment.id ? { ...c, text, edited: true } : c))
     )
-    if (isRemote) {
-      editComment(comment.id, text).catch(() => {})
-    }
+    editComment(comment.id, text).catch(() => {})
     cancelEdit()
   }
 
@@ -188,9 +232,7 @@ function CommentPanel({ post, open, onClose }) {
       }
       return prev.filter((item) => !toRemove.has(item.id))
     })
-    if (isRemote) {
-      deleteComment(id).catch(() => {})
-    }
+    deleteComment(id).catch(() => {})
     setConfirmId(null)
   }
 

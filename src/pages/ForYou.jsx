@@ -44,7 +44,7 @@ function ForYou() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [mode, setMode] = useState(() => readMode(searchParams))
   const [subjects] = useState(() => shuffleArray(POPULAR_SUBJECTS))
-  const { openPrompt } = useAuth()
+  const { openSignIn } = useAuth()
   const { allPosts, hiddenIds } = useInteractions()
   const sentinelRef = useRef(null)
   const pendingRef = useRef(false)
@@ -226,7 +226,7 @@ function ForYou() {
           <p className="side-join-copy">
             Follow discussions and share proofs with like-minded thinkers.
           </p>
-          <button type="button" className="btn btn-accent" onClick={() => openPrompt('signin')}>
+          <button type="button" className="btn btn-accent" onClick={openSignIn}>
             Sign in
           </button>
         </div>

@@ -29,7 +29,7 @@ const TABS = [
 ]
 
 function Profile() {
-  const { user, isAuthenticated, isPremium, openPrompt, signOut } = useAuth()
+  const { user, isAuthenticated, isPremium, openPrompt, openSignIn, signOut } = useAuth()
   const { savedIds, followingIds, drafts, allPosts, publishDraft, deleteDraft } = useInteractions()
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
@@ -43,10 +43,10 @@ function Profile() {
           Your questions, saved posts and followed discussions are private until you sign in.
         </p>
         <div className="profile-guest-actions">
-          <button type="button" className="btn btn-accent" onClick={() => openPrompt('signin')}>
+          <button type="button" className="btn btn-accent" onClick={openSignIn}>
             Sign in
           </button>
-          <button type="button" className="btn btn-outline" onClick={() => openPrompt('signin')}>
+          <button type="button" className="btn btn-outline" onClick={openSignIn}>
             Create account
           </button>
         </div>

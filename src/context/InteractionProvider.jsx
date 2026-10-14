@@ -5,6 +5,15 @@ import { samplePosts } from '../data/samplePosts'
 import { sampleNotifications } from '../data/sampleNotifications'
 import { isRemote, recordShare, createReport, recordProfileView } from '../lib/api'
 import { CURRENT_USER_ID, nameFromUserId } from '../data/users'
+import { getInteractions, saveInteractions } from '../lib/userStore'
+
+function toSets(data) {
+  return {
+    liked: new Set(data.liked || []),
+    saved: new Set(data.saved || []),
+    following: new Set(data.following || [])
+  }
+}
 
 function loadJson(key, fallback) {
   try {
@@ -38,11 +47,41 @@ function getViewerId() {
 
 function InteractionProvider({ children }) {
   const { user, isAuthenticated } = useAuth()
+  const userId = user?.id || null
   const viewerId = useMemo(() => getViewerId(), [])
   const shareViewsRef = useRef(new Set(loadJson('problematic:share-views', [])))
   const [shareCounts, setShareCounts] = useState(() => loadJson('problematic:shares', {}))
-  const [savedIds, setSavedIds] = useState(() => new Set())
-  const [followingIds, setFollowingIds] = useState(() => new Set())
+  const [interactions, setInteractions] = useState(() => toSets(getInteractions(userId)))
+  const [interactionsUserId, setInteractionsUserId] = useState(userId)
+  const { liked: likedIds, saved: savedIds, following: followingIds } = interactions
+
+  if (interactionsUserId !== userId) {
+    setInteractionsUserId(userId)
+    setInteractions(toSets(getInteractions(userId)))
+  }
+
+  const toggleCollection = useCallback(
+    (key, postId) => {
+      setInteractions((prev) => {
+        const nextSet = new Set(prev[key])
+        if (nextSet.has(postId)) {
+          nextSet.delete(postId)
+        } else {
+          nextSet.add(postId)
+        }
+        const next = { ...prev, [key]: nextSet }
+        if (userId) {
+          saveInteractions(userId, {
+            liked: [...next.liked],
+            saved: [...next.saved],
+            following: [...next.following]
+          })
+        }
+        return next
+      })
+    },
+    [userId]
+  )
   const [allNotifications, setAllNotifications] = useState(() => sampleNotifications)
   const [reports, setReports] = useState(() => loadJson('problematic:reports', []))
   const profileViewsRef = useRef(new Set(loadJson('problematic:profile-views', [])))
@@ -51,29 +90,20 @@ function InteractionProvider({ children }) {
   const [drafts, setDrafts] = useState(() => loadJson('problematic:drafts', []))
   const [dynamicPosts, setDynamicPosts] = useState(() => loadJson('problematic:posts', []))
 
-  const toggleSaved = useCallback((postId) => {
-    setSavedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(postId)) {
-        next.delete(postId)
-      } else {
-        next.add(postId)
-      }
-      return next
-    })
-  }, [])
+  const toggleSaved = useCallback(
+    (postId) => toggleCollection('saved', postId),
+    [toggleCollection]
+  )
 
-  const toggleFollowing = useCallback((postId) => {
-    setFollowingIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(postId)) {
-        next.delete(postId)
-      } else {
-        next.add(postId)
-      }
-      return next
-    })
-  }, [])
+  const toggleFollowing = useCallback(
+    (postId) => toggleCollection('following', postId),
+    [toggleCollection]
+  )
+
+  const toggleLike = useCallback(
+    (postId) => toggleCollection('liked', postId),
+    [toggleCollection]
+  )
 
   const toggleReplyNotify = useCallback((postId) => {
     setReplyNotifyIds((prev) => {
@@ -287,8 +317,10 @@ function InteractionProvider({ children }) {
 
   const value = useMemo(
     () => ({
+      likedIds,
       savedIds,
       followingIds,
+      toggleLike,
       toggleSaved,
       toggleFollowing,
       notifications,
@@ -318,8 +350,10 @@ function InteractionProvider({ children }) {
       registerProfileView
     }),
     [
+      likedIds,
       savedIds,
       followingIds,
+      toggleLike,
       toggleSaved,
       toggleFollowing,
       notifications,

@@ -7,7 +7,7 @@ import MobileSearch from './MobileSearch'
 import { useAuth } from '../context/auth'
 
 function Header() {
-  const { user, isAuthenticated, openPrompt, requirePremium, signOut } = useAuth()
+  const { user, isAuthenticated, openSignIn, requirePremium, signOut } = useAuth()
   const navigate = useNavigate()
   const [openAccount, setOpenAccount] = useState(false)
   const wrapRef = useRef(null)
@@ -113,7 +113,7 @@ function Header() {
                     className="menu-item"
                     role="menuitem"
                     onClick={() => {
-                      openPrompt('signin')
+                      openSignIn()
                       setOpenAccount(false)
                     }}
                   >
