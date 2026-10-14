@@ -12,6 +12,7 @@
     "pub": "git add -A && git commit -m \"update\" && git push"
   },
   "dependencies": {
+    "@supabase/server": "^1.9.2",
     "@supabase/supabase-js": "^2.117.3",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",

@@ -9,6 +9,7 @@ import Notifications from './pages/Notifications'
 import PostPage from './pages/PostPage'
 import CreatePage from './pages/CreatePage'
 import CheckProof from './pages/CheckProof'
+import Policy from './pages/Policy'
 
 function App() {
   return (
@@ -22,9 +23,12 @@ function App() {
             <Route path="/post/:id" element={<PostPage />} />
             <Route path="/discoveries" element={<Discoveries />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:userId/view/:viewerId" element={<Profile />} />
+            <Route path="/profile/:userId" element={<Profile />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/create" element={<CreatePage />} />
             <Route path="/checkproof" element={<CheckProof />} />
+            <Route path="/policy" element={<Policy />} />
           </Route>
         </Routes>
       </InteractionProvider>

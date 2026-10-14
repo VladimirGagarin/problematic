@@ -262,6 +262,11 @@
   color: #ff4757;
 }
 
+.comment-action-report:hover {
+  color: #ff4757;
+  background: rgba(255, 71, 87, 0.12);
+}
+
 .comment-replies {
   grid-column: 1 / -1;
   margin-left: 1.4rem;

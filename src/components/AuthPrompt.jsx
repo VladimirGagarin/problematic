@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
-import { FiX, FiUserPlus, FiStar } from 'react-icons/fi'
+import { useNavigate } from 'react-router-dom'
+import { FiX, FiUserPlus, FiStar, FiAlertOctagon } from 'react-icons/fi'
 import { useAuth } from '../context/auth'
 import './AuthPrompt.css'
 
@@ -16,6 +17,12 @@ const CONTENT = {
     primary: 'Go premium',
     secondary: 'Not now'
   },
+  ineligible: {
+    title: 'Account restricted',
+    body: 'You were signed out because this account breached our community guidelines. Review our policy to understand the rules and how to appeal.',
+    primary: 'Read the policy',
+    secondary: 'Close'
+  },
   post: {
     title: 'The composer is coming',
     body: 'Problem publishing arrives with the Premium posting milestone. VA BENE 9.',
@@ -26,6 +33,7 @@ const CONTENT = {
 
 function AuthPrompt({ type, onClose }) {
   const { signIn, upgrade } = useAuth()
+  const navigate = useNavigate()
   const content = CONTENT[type] || null
 
   useEffect(() => {
@@ -42,6 +50,10 @@ function AuthPrompt({ type, onClose }) {
   const handlePrimary = () => {
     if (type === 'signin') signIn()
     if (type === 'premium') upgrade()
+    if (type === 'ineligible') {
+      onClose()
+      navigate('/policy')
+    }
     if (type === 'post') onClose()
   }
 
@@ -58,7 +70,13 @@ function AuthPrompt({ type, onClose }) {
           <FiX size={18} />
         </button>
         <span className="auth-prompt-icon" aria-hidden="true">
-          {type === 'premium' ? <FiStar /> : <FiUserPlus />}
+          {type === 'premium' ? (
+            <FiStar />
+          ) : type === 'ineligible' ? (
+            <FiAlertOctagon />
+          ) : (
+            <FiUserPlus />
+          )}
         </span>
         <h2 className="auth-prompt-title">{content.title}</h2>
         <p className="auth-prompt-body">{content.body}</p>

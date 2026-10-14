@@ -11,13 +11,20 @@ import {
 } from 'react-icons/fi'
 import { useAuth } from '../context/auth'
 import { useInteractions } from '../context/interactions'
-import { toggleVote, recordShare, isRemote } from '../lib/api'
+import { toggleVote, isRemote } from '../lib/api'
 import { formatCompactNumber } from '../utils/time'
 
 function DiscussionActions({ post, onOpenComments }) {
   const navigate = useNavigate()
   const { requireAuth } = useAuth()
-  const { savedIds, followingIds, toggleSaved, toggleFollowing } = useInteractions()
+  const {
+    savedIds,
+    followingIds,
+    toggleSaved,
+    toggleFollowing,
+    createShareLink,
+    getShareCount
+  } = useInteractions()
   const [liked, setLiked] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -43,14 +50,11 @@ function DiscussionActions({ post, onOpenComments }) {
   }
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/post/${post.id}`
+    const url = createShareLink(post.id)
     try {
       await navigator.clipboard.writeText(url)
     } catch {
       // clipboard may be blocked; still show the copied confirmation
-    }
-    if (isRemote && requireAuth()) {
-      recordShare(post.id).catch(() => {})
     }
     setCopied(true)
     setTimeout(() => setCopied(false), 1600)
@@ -128,6 +132,7 @@ function DiscussionActions({ post, onOpenComments }) {
           aria-label="Copy link"
         >
           {copied ? <FiCheck size={17} /> : <FiShare2 size={17} />}
+          <span className="da-count">{formatCompactNumber(getShareCount(post))}</span>
           <span className="da-label">{copied ? 'Copied!' : 'Share'}</span>
         </button>
       </div>

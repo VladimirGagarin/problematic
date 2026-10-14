@@ -99,6 +99,53 @@ export async function recordShare(postId) {
   return { post: data ? toPost(data) : null }
 }
 
+export const VIOLATION_THRESHOLD = 3
+
+export async function checkUserEligibility(userId) {
+  if (supabase) {
+    const { data, error } = await supabase.rpc('check_eligibility')
+    if (error) throw error
+    return Boolean(data)
+  }
+  try {
+    const raw = localStorage.getItem('problematic:reports')
+    const reports = raw ? JSON.parse(raw) : []
+    const against = reports.filter(
+      (r) => r.targetUserId === userId && r.status !== 'dismissed'
+    )
+    return against.length < VIOLATION_THRESHOLD
+  } catch {
+    return true
+  }
+}
+
+export async function createReport(report) {
+  if (!supabase) return { report }
+  const { data, error } = await supabase
+    .from('reports')
+    .insert({
+      reporter_id: report.reporterId || null,
+      target_type: report.targetType,
+      target_id: String(report.targetId),
+      target_user_id: report.targetUserId || null,
+      reason: report.reason,
+      details: report.details || ''
+    })
+    .select()
+    .single()
+  if (error) throw error
+  return { report: data }
+}
+
+export async function recordProfileView(ownerId, viewerId) {
+  if (!supabase) return
+  const { error } = await supabase.rpc('record_profile_view', {
+    p_owner_id: ownerId,
+    p_viewer_id: viewerId
+  })
+  if (error) throw error
+}
+
 export async function fetchComments(postId) {
   if (!supabase) return getComments(postId)
   const { data, error } = await supabase

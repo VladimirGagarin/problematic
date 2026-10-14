@@ -111,18 +111,28 @@ alter table public.votes enable row level security;
 alter table public.comments enable row level security;
 alter table public.shares enable row level security;
 
+drop policy if exists "profiles are readable" on public.profiles;
+drop policy if exists "users edit own profile" on public.profiles;
 create policy "profiles are readable" on public.profiles for select using (true);
 create policy "users edit own profile" on public.profiles for update to authenticated using (id = auth.uid());
 
+drop policy if exists "posts are readable" on public.posts;
+drop policy if exists "authenticated create posts" on public.posts;
 create policy "posts are readable" on public.posts for select using (true);
 create policy "authenticated create posts" on public.posts for insert to authenticated with check (author_id = auth.uid());
 
+drop policy if exists "votes are readable" on public.votes;
+drop policy if exists "users manage own votes" on public.votes;
 create policy "votes are readable" on public.votes for select using (true);
 create policy "users manage own votes" on public.votes for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
+drop policy if exists "comments are readable" on public.comments;
+drop policy if exists "users create comments" on public.comments;
 create policy "comments are readable" on public.comments for select using (true);
 create policy "users create comments" on public.comments for insert to authenticated with check (author_id = auth.uid());
 
+drop policy if exists "shares are readable" on public.shares;
+drop policy if exists "users create shares" on public.shares;
 create policy "shares are readable" on public.shares for select using (true);
 create policy "users create shares" on public.shares for insert to authenticated with check (user_id = auth.uid());
 
@@ -138,6 +148,7 @@ as $$
 declare
   v_user uuid := auth.uid();
   v_existing smallint;
+  v_post public.posts;
 begin
   if v_user is null then
     raise exception 'must be authenticated';
@@ -168,7 +179,8 @@ begin
     where id = p_post_id;
   end if;
 
-  return query select * from public.posts where id = p_post_id;
+  select * into v_post from public.posts where id = p_post_id;
+  return v_post;
 end;
 $$;
 
@@ -180,6 +192,7 @@ set search_path = public
 as $$
 declare
   v_user uuid := auth.uid();
+  v_post public.posts;
 begin
   if v_user is null then
     raise exception 'must be authenticated';
@@ -190,7 +203,8 @@ begin
     update public.posts set share_count = share_count + 1 where id = p_post_id;
   end if;
 
-  return query select * from public.posts where id = p_post_id;
+  select * into v_post from public.posts where id = p_post_id;
+  return v_post;
 end;
 $$;
 
@@ -227,3 +241,107 @@ $$;
 grant execute on function public.toggle_vote(text, smallint) to authenticated;
 grant execute on function public.record_share(text) to authenticated;
 grant execute on function public.add_comment(text, text, uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Eligibility: every user starts ineligible until the check runs
+-- ---------------------------------------------------------------------------
+alter table public.profiles
+  add column if not exists eligible boolean not null default false;
+
+-- ---------------------------------------------------------------------------
+-- Reports: users flag posts, comments or profiles that break the guidelines
+-- ---------------------------------------------------------------------------
+create table if not exists public.reports (
+  id uuid primary key default gen_random_uuid(),
+  reporter_id uuid references auth.users (id) on delete set null,
+  target_type text not null check (target_type in ('post', 'comment', 'profile')),
+  target_id text not null,
+  target_user_id uuid references auth.users (id) on delete set null,
+  reason text not null,
+  details text not null default '',
+  status text not null default 'pending' check (status in ('pending', 'upheld', 'dismissed')),
+  created_at timestamptz not null default now()
+);
+
+create index if not exists reports_target_user_idx on public.reports (target_user_id, status);
+
+-- ---------------------------------------------------------------------------
+-- Profile views: alerts an owner that someone opened their profile
+-- ---------------------------------------------------------------------------
+create table if not exists public.profile_views (
+  id uuid primary key default gen_random_uuid(),
+  owner_id uuid not null references auth.users (id) on delete cascade,
+  viewer_id uuid not null references auth.users (id) on delete cascade,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists profile_views_owner_idx on public.profile_views (owner_id, created_at desc);
+
+alter table public.reports enable row level security;
+alter table public.profile_views enable row level security;
+
+drop policy if exists "users create reports" on public.reports;
+drop policy if exists "reporters read own reports" on public.reports;
+create policy "users create reports" on public.reports
+  for insert to authenticated with check (reporter_id = auth.uid());
+create policy "reporters read own reports" on public.reports
+  for select to authenticated using (reporter_id = auth.uid() or target_user_id = auth.uid());
+
+drop policy if exists "owners read profile views" on public.profile_views;
+drop policy if exists "users record profile views" on public.profile_views;
+create policy "owners read profile views" on public.profile_views
+  for select to authenticated using (owner_id = auth.uid());
+create policy "users record profile views" on public.profile_views
+  for insert to authenticated with check (viewer_id = auth.uid());
+
+-- ---------------------------------------------------------------------------
+-- RPC: eligibility check + profile-view tracking
+-- ---------------------------------------------------------------------------
+create or replace function public.check_eligibility()
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_reports integer;
+  v_eligible boolean;
+begin
+  if v_user is null then
+    raise exception 'must be authenticated';
+  end if;
+
+  select count(*) into v_reports
+  from public.reports
+  where target_user_id = v_user and status <> 'dismissed';
+
+  v_eligible := v_reports < 3;
+
+  update public.profiles set eligible = v_eligible where id = v_user;
+
+  return v_eligible;
+end;
+$$;
+
+create or replace function public.record_profile_view(p_owner_id uuid, p_viewer_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'must be authenticated';
+  end if;
+  if p_owner_id = p_viewer_id then
+    return;
+  end if;
+
+  insert into public.profile_views (owner_id, viewer_id)
+  values (p_owner_id, p_viewer_id);
+end;
+$$;
+
+grant execute on function public.check_eligibility() to authenticated;
+grant execute on function public.record_profile_view(uuid, uuid) to authenticated;

@@ -7,6 +7,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const outFile = join(root, 'supabase', 'seed-posts.sql')
 
 const esc = (value) => String(value ?? '').replaceAll("'", "''")
+const lit = (value) => `'${esc(value)}'`
 
 const pgArray = (values) => {
   const items = (values || []).map(esc).join("','")
@@ -15,20 +16,20 @@ const pgArray = (values) => {
 
 const rows = samplePosts.map((p) => {
   const fields = [
-    esc(p.id),
-    esc(p.title),
-    esc(p.type),
-    esc(p.category),
+    lit(p.id),
+    lit(p.title),
+    lit(p.type),
+    lit(p.category),
     pgArray(p.secondaryCategories),
-    esc(p.difficulty),
-    esc(p.problem),
-    esc(p.author),
-    esc(p.createdAt),
+    lit(p.difficulty),
+    lit(p.problem),
+    lit(p.author),
+    lit(p.createdAt),
     pgArray(p.hints),
-    esc(p.solution),
-    esc(p.answer),
-    esc(p.formula),
-    esc(p.solutionStatus),
+    lit(p.solution),
+    lit(p.answer),
+    lit(p.formula),
+    lit(p.solutionStatus),
     0,
     0,
     0

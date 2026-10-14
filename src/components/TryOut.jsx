@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import {
   FiX,
@@ -9,15 +10,42 @@ import {
   FiArrowRight,
   FiAward
 } from 'react-icons/fi'
-import { getTryOut, generateInstance, markAnswer, formatNumber } from '../utils/formulaEngine'
+import {
+  getTryOut,
+  getTryOutQuiz,
+  generateInstance,
+  markAnswer,
+  markQuizAnswer,
+  formatNumber,
+  isTryOutPossible
+} from '../utils/formulaEngine'
 import { formatCategoryLabel } from '../data/categories'
+import { formatTypeLabel } from '../data/types'
 import { useInteractions } from '../context/interactions'
 import './TryOut.css'
 
+function pickQuiz(pool, avoid) {
+  if (!pool || pool.length === 0) return null
+  if (pool.length === 1) return pool[0]
+  let next = pool[Math.floor(Math.random() * pool.length)]
+  if (avoid && next.qn === avoid.qn) {
+    next = pool[(pool.indexOf(next) + 1) % pool.length]
+  }
+  return next
+}
+
+function firstAnswer(answer) {
+  return String(answer ?? '').split('|')[0].trim()
+}
+
 function TryOut({ post, onClose }) {
   const tryOut = useMemo(() => getTryOut(post), [post])
+  const quizPool = useMemo(() => getTryOutQuiz(post), [post])
+  const mode = tryOut ? 'pattern' : quizPool ? 'quiz' : null
+
   const { allPosts } = useInteractions()
   const [instance, setInstance] = useState(() => (tryOut ? generateInstance(tryOut) : null))
+  const [quiz, setQuiz] = useState(() => (tryOut ? null : pickQuiz(quizPool, null)))
   const [input, setInput] = useState('')
   const [result, setResult] = useState(null)
   const [revealed, setRevealed] = useState(false)
@@ -34,25 +62,28 @@ function TryOut({ post, onClose }) {
 
   useEffect(() => {
     inputRef.current?.focus()
-  }, [instance])
+  }, [instance, quiz])
 
   const suggestions = useMemo(() => {
     if (!allPosts) return []
     return allPosts
-      .filter((p) => p.id !== post.id && p.formula && getTryOut(p))
+      .filter((p) => p.id !== post.id && isTryOutPossible(p))
       .sort((a, b) => {
-        const aSame = a.category === post.category ? 0 : 1
-        const bSame = b.category === post.category ? 0 : 1
+        const aSame = a.type === post.type ? 0 : 1
+        const bSame = b.type === post.type ? 0 : 1
         return aSame - bSame || b.voteCount - a.voteCount
       })
       .slice(0, 3)
   }, [allPosts, post])
 
-  if (!tryOut || !instance) return null
+  if (!mode || (mode === 'pattern' && !instance) || (mode === 'quiz' && !quiz)) return null
+  if (typeof document === 'undefined') return null
+
+  const expected = mode === 'pattern' ? instance.answer : quiz.answer
 
   const handleCheck = () => {
     if (result) return
-    const marked = markAnswer(input, instance.answer)
+    const marked = mode === 'pattern' ? markAnswer(input, expected) : markQuizAnswer(input, expected)
     setResult(marked)
     setStats((prev) => ({
       attempts: prev.attempts + 1,
@@ -63,13 +94,17 @@ function TryOut({ post, onClose }) {
   }
 
   const next = () => {
-    setInstance(generateInstance(tryOut))
+    if (mode === 'pattern') {
+      setInstance(generateInstance(tryOut))
+    } else {
+      setQuiz((prev) => pickQuiz(quizPool, prev))
+    }
     setInput('')
     setResult(null)
     setRevealed(false)
   }
 
-  return (
+  return createPortal(
     <div
       className="tryout-overlay"
       role="presentation"
@@ -77,7 +112,12 @@ function TryOut({ post, onClose }) {
         if (e.target === e.currentTarget) onClose()
       }}
     >
-      <div className="tryout-card" role="dialog" aria-modal="true" aria-label="Try out">
+      <div
+        className={`tryout-card tryout-card-${mode}`}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Try out"
+      >
         <button type="button" className="tryout-close" onClick={onClose} aria-label="Close">
           <FiX size={18} />
         </button>
@@ -86,23 +126,36 @@ function TryOut({ post, onClose }) {
           <span className="tryout-badge">
             <FiPlay size={13} /> Try out
           </span>
+          <span className="tryout-type">{formatTypeLabel(post.type)}</span>
           <h2 className="tryout-title">{post.title}</h2>
           <p className="tryout-sub">
-            The pattern is generated from{' '}
-            <code className="tryout-code">{post.formula}</code> — find the next value.
+            {mode === 'pattern' ? (
+              <>
+                The pattern is generated from <code className="tryout-code">{post.formula}</code> —
+                find the next value.
+              </>
+            ) : (
+              <>Answer this {formatTypeLabel(post.type).toLowerCase()} question.</>
+            )}
           </p>
         </header>
 
-        <div className="tryout-pattern" aria-label="Generated pattern">
-          {instance.sequence.map((term, idx) => (
-            <span key={idx} className="tryout-term">
-              {formatNumber(term)}
+        {mode === 'pattern' ? (
+          <div className="tryout-pattern" aria-label="Generated pattern">
+            {instance.sequence.map((term, idx) => (
+              <span key={idx} className="tryout-term">
+                {formatNumber(term)}
+              </span>
+            ))}
+            <span className="tryout-term tryout-term-unknown" aria-hidden="true">
+              ?
             </span>
-          ))}
-          <span className="tryout-term tryout-term-unknown" aria-hidden="true">
-            ?
-          </span>
-        </div>
+          </div>
+        ) : (
+          <div className="tryout-question" aria-label="Question">
+            {quiz.qn}
+          </div>
+        )}
 
         <div className="tryout-input-row">
           <input
@@ -145,10 +198,14 @@ function TryOut({ post, onClose }) {
             </span>
             {!result.correct && (
               <span className="tryout-answer-key">
-                The right answer was <strong>{formatNumber(instance.answer)}</strong>.
+                The right answer was{' '}
+                <strong>
+                  {mode === 'pattern' ? formatNumber(expected) : firstAnswer(expected)}
+                </strong>
+                .
               </span>
             )}
-            {revealed && (
+            {revealed && mode === 'pattern' && (
               <span className="tryout-rule">
                 Rule: <code>{post.formula}</code>
               </span>
@@ -162,13 +219,15 @@ function TryOut({ post, onClose }) {
             {stats.correct}/{stats.attempts} correct · streak {stats.streak}
           </span>
           <button type="button" className="tryout-link" onClick={next}>
-            New pattern <FiArrowRight size={14} />
+            {mode === 'pattern' ? 'New pattern' : 'Next question'} <FiArrowRight size={14} />
           </button>
         </footer>
 
         {suggestions.length > 0 && (
           <section className="tryout-suggest">
-            <span className="tryout-suggest-title">More patterns like this</span>
+            <span className="tryout-suggest-title">
+              {mode === 'pattern' ? 'More patterns like this' : 'More to try'}
+            </span>
             <div className="tryout-suggest-list">
               {suggestions.map((p) => (
                 <Link
@@ -179,7 +238,7 @@ function TryOut({ post, onClose }) {
                 >
                   <span className="tryout-suggest-name">{p.title}</span>
                   <span className="tryout-suggest-meta">
-                    {formatCategoryLabel(p.category)} · {p.formula}
+                    {formatCategoryLabel(p.category)} · {formatTypeLabel(p.type)}
                   </span>
                 </Link>
               ))}
@@ -187,7 +246,8 @@ function TryOut({ post, onClose }) {
           </section>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 

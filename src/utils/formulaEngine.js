@@ -1,3 +1,18 @@
+import { getQuizPool } from '../data/tryOutQuizzes'
+
+export const TRY_OUT_TYPES = [
+  'sequence-puzzle',
+  'logic-puzzle',
+  'open-problem',
+  'number-puzzle',
+  'algebra-problem',
+  'probability-problem',
+  'game-theory-problem',
+  'cryptography-problem',
+  'challenge',
+  'mathematical-model'
+]
+
 const FUNCTIONS = {
   sqrt: Math.sqrt,
   abs: Math.abs,
@@ -250,7 +265,48 @@ export function getTryOut(post) {
 }
 
 export function isTryOutPossible(post) {
-  return getTryOut(post) !== null
+  if (!post || !post.type) return false
+  return TRY_OUT_TYPES.includes(post.type)
+}
+
+export function getTryOutQuiz(post) {
+  if (!post || !post.type) return null
+  return getQuizPool(post.type)
+}
+
+const normalizeAnswer = (value) =>
+  String(value ?? '')
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .replace(/[.!?]+$/g, '')
+    .trim()
+
+export function markQuizAnswer(text, expected) {
+  const trimmed = (text || '').trim()
+  if (!trimmed) return { correct: false, reason: 'Enter an answer to check it.' }
+
+  const user = normalizeAnswer(trimmed)
+  const options = String(expected ?? '')
+    .split('|')
+    .map(normalizeAnswer)
+    .filter(Boolean)
+
+  const userNumber = Number(user.replace(/,/g, ''))
+  const correct = options.some((option) => {
+    if (option === user) return true
+    const optionNumber = Number(option.replace(/,/g, ''))
+    return (
+      Number.isFinite(userNumber) &&
+      Number.isFinite(optionNumber) &&
+      Math.abs(userNumber - optionNumber) < 1e-9
+    )
+  })
+
+  return {
+    correct,
+    value: trimmed,
+    reason: correct ? null : 'Not quite — try again.'
+  }
 }
 
 const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min

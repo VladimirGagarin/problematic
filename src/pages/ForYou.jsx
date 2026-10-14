@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import PostCard, { PostCardSkeleton } from '../components/PostCard'
 import TopicChip from '../components/TopicChip'
 import { shuffleArray } from '../utils/shuffle'
@@ -14,9 +14,17 @@ const GHOST_COUNT = 2
 const LOAD_DELAY = 650
 
 const TRYOUT_FILTERS = [
-  { value: 'no', label: 'Non Try-out' },
-  { value: 'yes', label: 'Questions with Try-outs' }
+  { value: 'any', label: 'Any' },
+  { value: 'nontryout', label: 'Non Try-out' },
+  { value: 'tryout', label: 'Questions with Try-outs' }
 ]
+
+const TRYOUT_MODES = new Set(['tryout', 'nontryout'])
+
+function readMode(searchParams) {
+  const mode = searchParams.get('mode')
+  return TRYOUT_MODES.has(mode) ? mode : 'any'
+}
 
 const POPULAR_SUBJECTS = [
   { label: 'Number Theory', category: 'number-theory' },
@@ -33,7 +41,8 @@ function ForYou() {
   const [visible, setVisible] = useState(PAGE_SIZE)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [tryOutFilter, setTryOutFilter] = useState(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const [mode, setMode] = useState(() => readMode(searchParams))
   const [subjects] = useState(() => shuffleArray(POPULAR_SUBJECTS))
   const { openPrompt } = useAuth()
   const { allPosts, hiddenIds } = useInteractions()
@@ -44,10 +53,26 @@ function ForYou() {
     () =>
       allPosts.filter((p) => {
         if (hiddenIds.has(p.id)) return false
-        if (tryOutFilter) return isTryOutPossible(p) === (tryOutFilter === 'yes')
+        if (mode === 'tryout') return isTryOutPossible(p)
+        if (mode === 'nontryout') return !isTryOutPossible(p)
         return true
       }),
-    [allPosts, hiddenIds, tryOutFilter]
+    [allPosts, hiddenIds, mode]
+  )
+
+  const selectMode = useCallback(
+    (value) => {
+      setMode(value)
+      const next = new URLSearchParams(searchParams)
+      if (value === 'any') {
+        next.delete('mode')
+      } else {
+        next.set('mode', value)
+      }
+      setSearchParams(next, { replace: true })
+      setVisible(PAGE_SIZE)
+    },
+    [searchParams, setSearchParams]
   )
 
   const poolLengthRef = useRef(pool.length)
@@ -114,9 +139,9 @@ function ForYou() {
               <button
                 key={f.value}
                 type="button"
-                className={`topic-chip ${tryOutFilter === f.value ? 'active' : ''}`}
-                aria-pressed={tryOutFilter === f.value}
-                onClick={() => setTryOutFilter((v) => (v === f.value ? null : f.value))}
+                className={`topic-chip ${mode === f.value ? 'active' : ''}`}
+                aria-pressed={mode === f.value}
+                onClick={() => selectMode(f.value)}
               >
                 {f.label}
               </button>

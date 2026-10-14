@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { FiX, FiSend, FiUser, FiHeart, FiCornerUpLeft, FiBell } from 'react-icons/fi'
+import { FiX, FiSend, FiUser, FiHeart, FiCornerUpLeft, FiFlag, FiBell } from 'react-icons/fi'
 import { getComments } from '../data/samplePosts'
 import { fetchComments, addComment, isRemote } from '../lib/api'
 import { formatTimeAgo } from '../utils/time'
 import { useAuth } from '../context/auth'
 import { useInteractions } from '../context/interactions'
+import ReportDialog from './ReportDialog'
 import './CommentPanel.css'
 
 function CommentPanel({ post, open, onClose }) {
@@ -16,6 +17,7 @@ function CommentPanel({ post, open, onClose }) {
   const [likedIds, setLikedIds] = useState(() => new Set())
   const [sortMode, setSortMode] = useState('newest')
   const [replyTo, setReplyTo] = useState(null)
+  const [reportTarget, setReportTarget] = useState(null)
   const [visibleCount, setVisibleCount] = useState(4)
   const inputRef = useRef(null)
 
@@ -152,6 +154,15 @@ function CommentPanel({ post, open, onClose }) {
               <FiCornerUpLeft size={14} />
               <span>Reply</span>
             </button>
+            <button
+              type="button"
+              className="comment-action comment-action-report"
+              onClick={() => setReportTarget(comment)}
+              title="Report"
+            >
+              <FiFlag size={14} />
+              <span>Report</span>
+            </button>
           </div>
         </div>
         {replies.length > 0 && (
@@ -268,6 +279,14 @@ function CommentPanel({ post, open, onClose }) {
           <FiSend size={16} />
         </button>
       </form>
+
+      <ReportDialog
+        open={!!reportTarget}
+        subject={reportTarget ? `Comment by ${reportTarget.author}` : ''}
+        targetType="comment"
+        targetId={reportTarget?.id}
+        onClose={() => setReportTarget(null)}
+      />
     </section>
   )
 }

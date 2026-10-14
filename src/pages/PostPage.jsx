@@ -1,21 +1,102 @@
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { FiTrendingUp, FiBookOpen, FiHelpCircle, FiCheckSquare } from 'react-icons/fi'
 import { formatTypeLabel } from '../data/types'
 import { formatCategoryLabel } from '../data/categories'
-import PostCard from '../components/PostCard'
+import PostCard, { PostCardSkeleton } from '../components/PostCard'
 import { useInteractions } from '../context/interactions'
 import { formatCompactNumber } from '../utils/time'
 import { useDocumentTitle } from '../utils/useDocumentTitle'
+import { fetchPost, isRemote } from '../lib/api'
 import './PostPage.css'
+
+function PostPageSkeleton() {
+  return (
+    <div className="post-page-grid post-page-loading" aria-busy="true" aria-live="polite">
+      <span className="sr-only">Loading problem…</span>
+      <div className="post-page-main">
+        <PostCardSkeleton />
+      </div>
+      <aside className="post-page-side">
+        {[0, 1].map((i) => (
+          <section key={i} className="post-page-side-card post-side-skeleton">
+            <span className="skeleton skeleton-line skeleton-side-title" />
+            <span className="skeleton skeleton-line skeleton-side-row" />
+            <span className="skeleton skeleton-line skeleton-side-row" />
+            <span className="skeleton skeleton-line skeleton-side-row short" />
+          </section>
+        ))}
+      </aside>
+    </div>
+  )
+}
 
 function PostPage() {
   const { id } = useParams()
-  const { getPostOf, allPosts } = useInteractions()
-  const post = getPostOf(id)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { getPostOf, allPosts, registerShareView } = useInteractions()
+  const [post, setPost] = useState(null)
+  const [loadedId, setLoadedId] = useState(null)
+  const loading = loadedId !== id
 
   useDocumentTitle(
-    post ? `${post.title} · Problematic` : 'Problem not found · Problematic'
+    loading
+      ? 'Loading problem · Problematic'
+      : post
+        ? `${post.title} · Problematic`
+        : 'Problem not found · Problematic'
   )
+
+  useEffect(() => {
+    let active = true
+    let timer
+
+    const load = async () => {
+      if (isRemote) {
+        try {
+          const found = await fetchPost(id)
+          if (active) {
+            setPost(found)
+            setLoadedId(id)
+          }
+        } catch {
+          if (active) {
+            setPost(null)
+            setLoadedId(id)
+          }
+        }
+        return
+      }
+      const found = getPostOf(id) || null
+      timer = setTimeout(() => {
+        if (active) {
+          setPost(found)
+          setLoadedId(id)
+        }
+      }, 300)
+    }
+
+    load()
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [id, getPostOf])
+
+  useEffect(() => {
+    if (!post) return
+    const fromShare = searchParams.get('from_share')
+    if (fromShare !== 'true' && fromShare !== '1') return
+    registerShareView(post.id, searchParams.get('user_id'))
+    const next = new URLSearchParams(searchParams)
+    next.delete('from_share')
+    next.delete('user_id')
+    setSearchParams(next, { replace: true })
+  }, [post, searchParams, registerShareView, setSearchParams])
+
+  if (loading) {
+    return <PostPageSkeleton />
+  }
 
   if (!post) {
     return (
