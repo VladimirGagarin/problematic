@@ -128,8 +128,12 @@ create policy "users manage own votes" on public.votes for all to authenticated 
 
 drop policy if exists "comments are readable" on public.comments;
 drop policy if exists "users create comments" on public.comments;
+drop policy if exists "authors edit own comments" on public.comments;
+drop policy if exists "authors delete own comments" on public.comments;
 create policy "comments are readable" on public.comments for select using (true);
 create policy "users create comments" on public.comments for insert to authenticated with check (author_id = auth.uid());
+create policy "authors edit own comments" on public.comments for update to authenticated using (author_id = auth.uid()) with check (author_id = auth.uid());
+create policy "authors delete own comments" on public.comments for delete to authenticated using (author_id = auth.uid());
 
 drop policy if exists "shares are readable" on public.shares;
 drop policy if exists "users create shares" on public.shares;

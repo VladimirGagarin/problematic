@@ -177,3 +177,21 @@ export async function addComment(postId, { text, parentId = null }) {
   if (error) throw error
   return toComment(data)
 }
+
+export async function editComment(commentId, text) {
+  if (!supabase) return { id: commentId, text }
+  const { data, error } = await supabase
+    .from('comments')
+    .update({ text })
+    .eq('id', commentId)
+    .select()
+    .single()
+  if (error) throw error
+  return toComment(data)
+}
+
+export async function deleteComment(commentId) {
+  if (!supabase) return
+  const { error } = await supabase.from('comments').delete().eq('id', commentId)
+  if (error) throw error
+}
