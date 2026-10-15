@@ -354,6 +354,39 @@
   font-weight: 700;
 }
 
+.notification-additional {
+  color: var(--text-light);
+  font-size: 0.8rem;
+}
+
+.notification-actions {
+  display: flex;
+  padding: 0 0.5rem 0.65rem 3.1rem;
+}
+
+.notification-action {
+  font-size: 0.78rem;
+  padding: 0.35rem 0.75rem;
+}
+
+.notification-dismiss {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  border: none;
+  background: none;
+  color: var(--text-light);
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 6px;
+  line-height: 0;
+}
+
+.notification-dismiss:hover {
+  color: var(--text);
+  background: var(--border-light);
+}
+
 .notification-post {
   color: var(--accent);
   font-weight: 600;

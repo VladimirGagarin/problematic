@@ -1,5 +1,6 @@
 import { supabase, isRemote } from './supabase'
 import { samplePosts, getComments } from '../data/samplePosts'
+import { createNotification, notificationIdOf } from '../utils/notifications'
 
 export { isRemote }
 
@@ -163,6 +164,83 @@ export async function recordProfileView(ownerId, viewerId) {
     p_viewer_id: viewerId
   })
   if (error) throw error
+}
+
+const toNotification = (row) =>
+  createNotification({
+    notification_id: row.id,
+    notification_TimeSent: row.sent_at || row.created_at,
+    notification_Content: row.content,
+    from: row.from_user,
+    to: row.to_user_id || row.audience,
+    audience: row.audience,
+    type: row.type,
+    link: row.link,
+    action: row.action || null,
+    read: Boolean(row.read_at)
+  })
+
+export async function fetchNotifications() {
+  if (!supabase) return null
+  const { data, error } = await supabase
+    .from('notifications')
+    .select('*')
+    .order('sent_at', { ascending: false })
+    .limit(100)
+  if (error) throw error
+  return (data || []).map(toNotification)
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+export async function insertNotification(notification) {
+  if (!supabase) return null
+  const n = createNotification(notification)
+  const row = {
+    id: notificationIdOf(n),
+    to_user_id: typeof n.to === 'string' && UUID_RE.test(n.to) ? n.to : null,
+    audience: n.audience || 'none',
+    type: n.type,
+    from_user: n.from || 'problematicTeam',
+    content: n.notification_Content,
+    link: notificationContentLink(n),
+    action: n.action
+  }
+  const { data, error } = await supabase.from('notifications').insert(row).select().single()
+  if (error) throw error
+  return toNotification(data)
+}
+
+export async function broadcastNotification(notification) {
+  if (!supabase) return null
+  const n = createNotification(notification)
+  const { data, error } = await supabase.rpc('broadcast_notification', {
+    p_audience: n.audience || 'all',
+    p_type: n.type,
+    p_content: n.notification_Content,
+    p_link: n.notification_Content.link || '',
+    p_action: n.action
+  })
+  if (error) throw error
+  return toNotification(data)
+}
+
+export async function markNotificationReadRemote(notificationId) {
+  if (!supabase) return
+  const { error } = await supabase.rpc('mark_notification_read', {
+    p_notification_id: notificationId
+  })
+  if (error) throw error
+}
+
+export async function markAllNotificationsReadRemote() {
+  if (!supabase) return
+  const { error } = await supabase.rpc('mark_all_notifications_read')
+  if (error) throw error
+}
+
+function notificationContentLink(n) {
+  return n.notification_Content?.link || ''
 }
 
 export async function fetchComments(postId) {

@@ -3,9 +3,32 @@ import { InteractionContext } from './interactions'
 import { useAuth } from './auth'
 import { samplePosts } from '../data/samplePosts'
 import { sampleNotifications } from '../data/sampleNotifications'
-import { isRemote, recordShare, createReport, recordProfileView } from '../lib/api'
+import {
+  isRemote,
+  recordShare,
+  createReport,
+  recordProfileView,
+  insertNotification,
+  broadcastNotification,
+  markNotificationReadRemote,
+  markAllNotificationsReadRemote
+} from '../lib/api'
 import { CURRENT_USER_ID, nameFromUserId } from '../data/users'
 import { getInteractions, saveInteractions } from '../lib/userStore'
+import {
+  createNotification,
+  matchesViewer,
+  notificationIdOf,
+  notificationTimeOf,
+  isNotificationRead,
+  notificationContentOf,
+  requestBrowserPermission,
+  browserPermissionState,
+  showBrowserNotification,
+  NOTIFICATION_ACTION,
+  NOTIFICATION_TYPES,
+  PROBLEMATIC_TEAM
+} from '../utils/notifications'
 
 function toSets(data) {
   return {
@@ -45,8 +68,10 @@ function getViewerId() {
   }
 }
 
+const EMPTY_FEED = { pushed: [], read: {}, dismissed: [] }
+
 function InteractionProvider({ children }) {
-  const { user, isAuthenticated } = useAuth()
+  const { user, isAuthenticated, isPremium, openSignIn } = useAuth()
   const userId = user?.id || null
   const viewerId = useMemo(() => getViewerId(), [])
   const shareViewsRef = useRef(new Set(loadJson('problematic:share-views', [])))
@@ -82,7 +107,11 @@ function InteractionProvider({ children }) {
     },
     [userId]
   )
-  const [allNotifications, setAllNotifications] = useState(() => sampleNotifications)
+
+  const [notificationFeed, setNotificationFeed] = useState(() =>
+    loadJson('problematic:notification-feed', EMPTY_FEED)
+  )
+  const [browserPermission, setBrowserPermission] = useState(() => browserPermissionState())
   const [reports, setReports] = useState(() => loadJson('problematic:reports', []))
   const profileViewsRef = useRef(new Set(loadJson('problematic:profile-views', [])))
   const [replyNotifyIds, setReplyNotifyIds] = useState(() => new Set())
@@ -125,43 +154,178 @@ function InteractionProvider({ children }) {
     })
   }, [])
 
-  const addNotification = useCallback((notif) => {
-    setAllNotifications((prev) => [
-      {
-        id: `local-${Date.now()}`,
-        recipientId: CURRENT_USER_ID,
-        createdAt: new Date().toISOString(),
-        readAt: null,
-        ...notif
-      },
-      ...prev
-    ])
+  const updateFeed = useCallback((updater) => {
+    setNotificationFeed((prev) => {
+      const next = updater(prev || EMPTY_FEED)
+      persist('problematic:notification-feed', next)
+      return next
+    })
   }, [])
 
-  const markNotificationRead = useCallback((id) => {
-    setAllNotifications((prev) =>
-      prev.map((n) => (n.id === id && !n.readAt ? { ...n, readAt: new Date().toISOString() } : n))
-    )
-  }, [])
-
-  const markAllNotificationsRead = useCallback(() => {
-    setAllNotifications((prev) =>
-      prev.map((n) => (n.readAt ? n : { ...n, readAt: new Date().toISOString() }))
-    )
-  }, [])
-
-  const notifications = useMemo(
-    () =>
-      allNotifications.filter(
-        (n) => !n.recipientId || n.recipientId === CURRENT_USER_ID || n.recipientId === 'me'
-      ),
-    [allNotifications]
+  // ---- push a notification (in-app, persisted, and remote when configured) ----
+  const pushNotification = useCallback(
+    (input, { remote = true } = {}) => {
+      const notification = createNotification(input)
+      updateFeed((prev) => ({
+        ...prev,
+        pushed: [notification, ...(prev.pushed || [])].slice(0, 200)
+      }))
+      if (isRemote && remote) insertNotification(notification).catch(() => {})
+      return notification
+    },
+    [updateFeed]
   )
+
+  // Legacy alias used by the comment panel.
+  const addNotification = useCallback(
+    (notif) => pushNotification({ to: 'me', ...notif }),
+    [pushNotification]
+  )
+
+  const dismissNotification = useCallback(
+    (id) => {
+      updateFeed((prev) => ({
+        ...prev,
+        dismissed: Array.from(new Set([...(prev.dismissed || []), id]))
+      }))
+    },
+    [updateFeed]
+  )
+
+  const markNotificationRead = useCallback(
+    (id) => {
+      const readAt = new Date().toISOString()
+      updateFeed((prev) => ({ ...prev, read: { ...(prev.read || {}), [id]: readAt } }))
+      if (isRemote) markNotificationReadRemote(id).catch(() => {})
+    },
+    [updateFeed]
+  )
+
+  const browserSupported = browserPermission !== 'unsupported'
+
+  const sendBrowserThankYou = useCallback(() => {
+    const notification = pushNotification({
+      type: NOTIFICATION_TYPES.SYSTEM,
+      from: PROBLEMATIC_TEAM,
+      to: 'me',
+      notification_Content: {
+        text: 'Thank you for enabling notifications',
+        additional_text: 'You will now see updates from Problematic right in your browser.',
+        tagline: 'All set'
+      },
+      action: { type: NOTIFICATION_ACTION.SEND_THANKS, label: 'Send an example notification' }
+    })
+    showBrowserNotification('Thank you for enabling notifications', {
+      body: 'You will now see updates from Problematic right here.',
+      tag: notificationIdOf(notification)
+    })
+    return notification
+  }, [pushNotification])
+
+  const enableBrowserNotifications = useCallback(async () => {
+    const result = await requestBrowserPermission()
+    setBrowserPermission(result)
+    if (result === 'granted') {
+      sendBrowserThankYou()
+    }
+    return result
+  }, [sendBrowserThankYou])
+
+  const runNotificationAction = useCallback(
+    (notification) => {
+      const action = notification.action
+      if (!action) return
+      switch (action.type) {
+        case NOTIFICATION_ACTION.SIGN_IN:
+          openSignIn()
+          break
+        case NOTIFICATION_ACTION.ENABLE_BROWSER:
+          enableBrowserNotifications().then((result) => {
+            if (result === 'granted') dismissNotification(notificationIdOf(notification))
+          })
+          break
+        case NOTIFICATION_ACTION.SEND_THANKS:
+          sendBrowserThankYou()
+          break
+        case NOTIFICATION_ACTION.DISMISS:
+          dismissNotification(notificationIdOf(notification))
+          break
+        default:
+          break
+      }
+    },
+    [openSignIn, enableBrowserNotifications, sendBrowserThankYou, dismissNotification]
+  )
+
+  // ---- Problematic Team broadcasts to a segment (all / premium / reported) ----
+  const sendBroadcast = useCallback(
+    ({ audience = 'all', text, additionalText = '', tagline = '', link = '', action = null }) => {
+      const notification = pushNotification(
+        {
+          type: NOTIFICATION_TYPES.BROADCAST,
+          from: PROBLEMATIC_TEAM,
+          to: audience,
+          audience,
+          notification_Content: { text, additional_text: additionalText, tagline, link },
+          action
+        },
+        { remote: false }
+      )
+      if (isRemote) broadcastNotification(notification).catch(() => {})
+      return notification
+    },
+    [pushNotification]
+  )
+
+  const canBroadcast = Boolean(isAuthenticated && (user?.isTeam || user?.isPremium))
+
+  const isReported = useMemo(
+    () =>
+      reports.some(
+        (r) =>
+          (r.targetUserId === (userId || CURRENT_USER_ID)) && r.status !== 'dismissed'
+      ),
+    [reports, userId]
+  )
+
+  const viewer = useMemo(
+    () => ({ userId, viewerId, isPremium, isReported }),
+    [userId, viewerId, isPremium, isReported]
+  )
+
+  const notifications = useMemo(() => {
+    const feed = notificationFeed || EMPTY_FEED
+    const dismissed = new Set(feed.dismissed || [])
+    const readMap = feed.read || {}
+    const merged = [...(feed.pushed || []), ...sampleNotifications]
+    const seen = new Set()
+    const list = []
+    for (const raw of merged) {
+      const id = notificationIdOf(raw)
+      if (!id || seen.has(id) || dismissed.has(id)) continue
+      seen.add(id)
+      if (!matchesViewer(raw, viewer)) continue
+      const read = readMap[id] ? true : isNotificationRead(raw)
+      list.push({ ...raw, notification_id: id, read })
+    }
+    list.sort((a, b) => new Date(notificationTimeOf(b)) - new Date(notificationTimeOf(a)))
+    return list
+  }, [notificationFeed, viewer])
 
   const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.readAt).length,
+    () => notifications.filter((n) => !n.read).length,
     [notifications]
   )
+
+  const markAllNotificationsRead = useCallback(() => {
+    const readAt = new Date().toISOString()
+    updateFeed((prev) => {
+      const read = { ...(prev.read || {}) }
+      for (const n of notifications) read[notificationIdOf(n)] = readAt
+      return { ...prev, read }
+    })
+    if (isRemote) markAllNotificationsReadRemote().catch(() => {})
+  }, [notifications, updateFeed])
 
   const reportContent = useCallback((report) => {
     const entry = {
@@ -184,26 +348,26 @@ function InteractionProvider({ children }) {
     return entry
   }, [])
 
-  const registerProfileView = useCallback((ownerId, viewerId, viewerName) => {
-    if (!ownerId || !viewerId || ownerId === viewerId) return
-    const key = `${ownerId}:${viewerId}`
-    if (profileViewsRef.current.has(key)) return
-    profileViewsRef.current.add(key)
-    persist('problematic:profile-views', [...profileViewsRef.current])
-    setAllNotifications((prev) => [
-      {
-        id: `local-${Date.now()}`,
-        recipientId: ownerId,
-        type: 'profile_view',
-        viewerId,
-        createdAt: new Date().toISOString(),
-        readAt: null,
-        message: `${viewerName || nameFromUserId(viewerId)} viewed your profile.`
-      },
-      ...prev
-    ])
-    if (isRemote) recordProfileView(ownerId, viewerId).catch(() => {})
-  }, [])
+  const registerProfileView = useCallback(
+    (ownerId, viewerUid, viewerName) => {
+      if (!ownerId || !viewerUid || ownerId === viewerUid) return
+      const key = `${ownerId}:${viewerUid}`
+      if (profileViewsRef.current.has(key)) return
+      profileViewsRef.current.add(key)
+      persist('problematic:profile-views', [...profileViewsRef.current])
+      pushNotification({
+        type: NOTIFICATION_TYPES.PROFILE_VIEW,
+        from: viewerUid,
+        to: ownerId,
+        notification_Content: {
+          text: `${viewerName || nameFromUserId(viewerUid)} viewed your profile.`,
+          tagline: 'Profile view'
+        }
+      })
+      if (isRemote) recordProfileView(ownerId, viewerUid).catch(() => {})
+    },
+    [pushNotification]
+  )
 
   const createDraft = useCallback((fields) => {
     const draft = {
@@ -325,13 +489,22 @@ function InteractionProvider({ children }) {
       toggleFollowing,
       notifications,
       unreadCount,
+      markNotificationRead,
+      markAllNotificationsRead,
+      dismissNotification,
+      pushNotification,
+      sendBroadcast,
+      canBroadcast,
+      browserPermission,
+      browserSupported,
+      enableBrowserNotifications,
+      runNotificationAction,
+      notificationContentOf,
       replyNotifyIds,
       toggleReplyNotify,
       hiddenIds,
       hidePost,
       addNotification,
-      markNotificationRead,
-      markAllNotificationsRead,
       drafts,
       dynamicPosts,
       createDraft,
@@ -358,13 +531,21 @@ function InteractionProvider({ children }) {
       toggleFollowing,
       notifications,
       unreadCount,
+      markNotificationRead,
+      markAllNotificationsRead,
+      dismissNotification,
+      pushNotification,
+      sendBroadcast,
+      canBroadcast,
+      browserPermission,
+      browserSupported,
+      enableBrowserNotifications,
+      runNotificationAction,
       replyNotifyIds,
       toggleReplyNotify,
       hiddenIds,
       hidePost,
       addNotification,
-      markNotificationRead,
-      markAllNotificationsRead,
       drafts,
       dynamicPosts,
       createDraft,

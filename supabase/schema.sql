@@ -349,3 +349,206 @@ $$;
 
 grant execute on function public.check_eligibility() to authenticated;
 grant execute on function public.record_profile_view(uuid, uuid) to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Notifications: personal messages + Problematic Team broadcasts
+--
+-- `to_user_id` targets one member; `audience` targets a segment
+-- ('all' | 'premium' | 'reported'). Guests receive the guest/system
+-- notifications locally (they have no auth row).
+-- ---------------------------------------------------------------------------
+alter table public.profiles
+  add column if not exists is_premium boolean not null default false;
+alter table public.profiles
+  add column if not exists is_team boolean not null default false;
+
+create table if not exists public.notifications (
+  id text primary key default gen_random_uuid()::text,
+  to_user_id uuid references auth.users (id) on delete cascade,
+  audience text not null default 'none'
+    check (audience in ('none', 'all', 'premium', 'reported')),
+  type text not null default 'system',
+  from_user text not null default 'problematicTeam',
+  from_user_id uuid references auth.users (id) on delete set null,
+  content jsonb not null default '{}'::jsonb,
+  link text not null default '',
+  action jsonb,
+  sent_at timestamptz not null default now(),
+  created_at timestamptz not null default now(),
+  expires_at timestamptz
+);
+
+create index if not exists notifications_to_user_idx
+  on public.notifications (to_user_id, sent_at desc);
+create index if not exists notifications_audience_idx
+  on public.notifications (audience, sent_at desc);
+
+create table if not exists public.notification_reads (
+  notification_id text not null references public.notifications (id) on delete cascade,
+  user_id uuid not null references auth.users (id) on delete cascade,
+  read_at timestamptz not null default now(),
+  primary key (notification_id, user_id)
+);
+
+create index if not exists notification_reads_user_idx
+  on public.notification_reads (user_id, read_at desc);
+
+alter table public.notifications enable row level security;
+alter table public.notification_reads enable row level security;
+
+drop policy if exists "read own or segment notifications" on public.notifications;
+create policy "read own or segment notifications" on public.notifications
+  for select to authenticated using (
+    to_user_id = auth.uid()
+    or audience = 'all'
+    or (
+      audience = 'premium'
+      and exists (
+        select 1 from public.profiles p
+        where p.id = auth.uid() and p.is_premium
+      )
+    )
+    or (
+      audience = 'reported'
+      and exists (
+        select 1 from public.reports r
+        where r.target_user_id = auth.uid() and r.status <> 'dismissed'
+      )
+    )
+  );
+
+drop policy if exists "team sends notifications" on public.notifications;
+create policy "team sends notifications" on public.notifications
+  for insert to authenticated with check (
+    exists (select 1 from public.profiles p where p.id = auth.uid() and p.is_team)
+  );
+
+drop policy if exists "users manage own reads" on public.notification_reads;
+create policy "users manage own reads" on public.notification_reads
+  for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+
+-- ---------------------------------------------------------------------------
+-- RPC: send / broadcast notifications
+-- ---------------------------------------------------------------------------
+create or replace function public.send_notification(
+  p_to uuid,
+  p_type text,
+  p_content jsonb,
+  p_link text default '',
+  p_action jsonb default null
+)
+returns public.notifications
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_team boolean;
+  v_row public.notifications;
+begin
+  select is_team into v_team from public.profiles where id = auth.uid();
+  if not coalesce(v_team, false) then
+    raise exception 'only Problematic Team members can send notifications';
+  end if;
+
+  insert into public.notifications (to_user_id, audience, type, from_user, from_user_id, content, link, action)
+  values (p_to, 'none', p_type, 'problematicTeam', auth.uid(), p_content, p_link, p_action)
+  returning * into v_row;
+
+  return v_row;
+end;
+$$;
+
+create or replace function public.broadcast_notification(
+  p_audience text,
+  p_type text,
+  p_content jsonb,
+  p_link text default '',
+  p_action jsonb default null
+)
+returns public.notifications
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_team boolean;
+  v_row public.notifications;
+begin
+  if p_audience not in ('all', 'premium', 'reported') then
+    raise exception 'invalid audience: %', p_audience;
+  end if;
+
+  select is_team into v_team from public.profiles where id = auth.uid();
+  if not coalesce(v_team, false) then
+    raise exception 'only Problematic Team members can broadcast';
+  end if;
+
+  insert into public.notifications (to_user_id, audience, type, from_user, from_user_id, content, link, action)
+  values (null, p_audience, p_type, 'problematicTeam', auth.uid(), p_content, p_link, p_action)
+  returning * into v_row;
+
+  return v_row;
+end;
+$$;
+
+create or replace function public.mark_notification_read(p_notification_id text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then
+    raise exception 'must be authenticated';
+  end if;
+  insert into public.notification_reads (notification_id, user_id)
+  values (p_notification_id, auth.uid())
+  on conflict (notification_id, user_id) do nothing;
+end;
+$$;
+
+create or replace function public.mark_all_notifications_read()
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_user uuid := auth.uid();
+begin
+  if v_user is null then
+    raise exception 'must be authenticated';
+  end if;
+  insert into public.notification_reads (notification_id, user_id)
+  select n.id, v_user
+  from public.notifications n
+  where n.to_user_id = v_user
+    or n.audience = 'all'
+    or (n.audience = 'premium' and exists (select 1 from public.profiles p where p.id = v_user and p.is_premium))
+    or (n.audience = 'reported' and exists (select 1 from public.reports r where r.target_user_id = v_user and r.status <> 'dismissed'))
+  on conflict (notification_id, user_id) do nothing;
+end;
+$$;
+
+grant execute on function public.send_notification(uuid, text, jsonb, text, jsonb) to authenticated;
+grant execute on function public.broadcast_notification(text, text, jsonb, text, jsonb) to authenticated;
+grant execute on function public.mark_notification_read(text) to authenticated;
+grant execute on function public.mark_all_notifications_read() to authenticated;
+
+-- ---------------------------------------------------------------------------
+-- Default system notifications (idempotent seeds)
+-- ---------------------------------------------------------------------------
+insert into public.notifications (id, to_user_id, audience, type, from_user, content, link, action)
+values
+  (
+    'ntf-welcome-member', null, 'all', 'system', 'problematicTeam',
+    '{"text":"Glad you are here","additional_text":"Reply to a discussion or follow a topic and we will keep you posted on what is new.","tagline":"Welcome back"}'::jsonb,
+    '', null
+  ),
+  (
+    'ntf-browser-permission', null, 'all', 'browser_permission', 'problematicTeam',
+    '{"text":"Turn on browser notifications","additional_text":"Get pinged the moment someone replies, mentions you or invites you to a discussion.","tagline":"Stay in the loop"}'::jsonb,
+    '', '{"type":"enable_browser_notifications","label":"Enable browser notifications"}'::jsonb
+  )
+on conflict (id) do nothing;

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { FiBell } from 'react-icons/fi'
 import NotificationItem from './NotificationItem'
 import { useInteractions } from '../context/interactions'
+import { notificationIdOf } from '../utils/notifications'
 
 function NotificationBell() {
   const [open, setOpen] = useState(false)
@@ -51,7 +52,7 @@ function NotificationBell() {
           </div>
           <div className="bell-list">
             {notifications.slice(0, 3).map((n) => (
-              <NotificationItem key={n.id} notification={n} />
+              <NotificationItem key={notificationIdOf(n)} notification={n} />
             ))}
           </div>
           <Link
