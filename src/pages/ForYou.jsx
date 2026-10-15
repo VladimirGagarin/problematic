@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import PostCard, { PostCardSkeleton } from '../components/PostCard'
 import TopicChip from '../components/TopicChip'
 import { shuffleArray } from '../utils/shuffle'
+import { buildForYouFeed } from '../utils/feed'
 import { formatCompactNumber } from '../utils/time'
 import { isTryOutPossible } from '../utils/formulaEngine'
 import { useAuth } from '../context/auth'
@@ -45,7 +46,7 @@ function ForYou() {
   const [mode, setMode] = useState(() => readMode(searchParams))
   const [subjects] = useState(() => shuffleArray(POPULAR_SUBJECTS))
   const { openSignIn } = useAuth()
-  const { allPosts, hiddenIds } = useInteractions()
+  const { allPosts, hiddenIds, likedIds, savedIds, followingIds } = useInteractions()
   const sentinelRef = useRef(null)
   const pendingRef = useRef(false)
 
@@ -58,6 +59,11 @@ function ForYou() {
         return true
       }),
     [allPosts, hiddenIds, mode]
+  )
+
+  const feed = useMemo(
+    () => buildForYouFeed(pool, { likedIds, savedIds, followingIds }),
+    [pool, likedIds, savedIds, followingIds]
   )
 
   const selectMode = useCallback(
@@ -75,10 +81,10 @@ function ForYou() {
     [searchParams, setSearchParams]
   )
 
-  const poolLengthRef = useRef(pool.length)
+  const poolLengthRef = useRef(feed.length)
   useEffect(() => {
-    poolLengthRef.current = pool.length
-  }, [pool.length])
+    poolLengthRef.current = feed.length
+  }, [feed.length])
 
   const trending = useMemo(
     () => [...pool].sort((a, b) => b.voteCount - a.voteCount).slice(0, 3),
@@ -108,7 +114,7 @@ function ForYou() {
     }, LOAD_DELAY)
   }, [])
 
-  const hasMore = visible < pool.length
+  const hasMore = visible < feed.length
 
   useEffect(() => {
     if (loading || !hasMore) return undefined
@@ -154,7 +160,7 @@ function ForYou() {
             ? Array.from({ length: PAGE_SIZE }).map((_, i) => (
                 <PostCardSkeleton key={`init-${i}`} />
               ))
-            : pool.slice(0, visible).map((post) => <PostCard key={post.id} post={post} />)}
+            : feed.slice(0, visible).map((post) => <PostCard key={post.id} post={post} />)}
 
           {!loading &&
             loadingMore &&
@@ -166,10 +172,10 @@ function ForYou() {
             <div ref={sentinelRef} className="foryou-sentinel" aria-hidden="true" />
           )}
 
-          {!loading && !hasMore && pool.length > 0 && (
+          {!loading && !hasMore && feed.length > 0 && (
             <p className="foryou-end">
               {'You\u2019ve reached the end \u2014 '}
-              {pool.length} problems.
+              {feed.length} problems.
             </p>
           )}
         </div>
